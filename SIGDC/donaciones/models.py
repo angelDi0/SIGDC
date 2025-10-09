@@ -22,6 +22,7 @@ class Donacion(models.Model):
     donante = models.ForeignKey(Perfil, on_delete=models.CASCADE, related_name='donaciones')
     fecha_publicacion = models.DateTimeField(auto_now_add=True)
     estado = models.CharField(max_length=20, choices=ESTADO_DONACION, default='DISPONIBLE')
+    direccion = models.CharField(max_length=255, blank=True, null=True)
     imagen = models.ImageField(upload_to='donaciones/', blank=True, null=True)
 
     def __str__(self):

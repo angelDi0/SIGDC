@@ -9,8 +9,9 @@ class Perfil(models.Model):
         ('ADMIN', 'Administrador'),
     ]
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    usuario = models.TextField(max_length=150, unique=True, blank=False, null=False)
     rol = models.CharField(max_length=15, choices=ROLES, default='DONANTE')
+    email = models.EmailField(unique=True, blank=False, null=False, max_length=255, default='')
     telefono = models.CharField(max_length=20, blank=True)
     direccion = models.CharField(max_length=255, blank=True)
     ciudad = models.CharField(max_length=100, blank=True)
@@ -18,8 +19,8 @@ class Perfil(models.Model):
     activo = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"{self.user.username} ({self.rol})"
+        return f"{self.usuario} ({self.rol})"
 
-    @property
+    @property 
     def es_admin(self):
         return self.rol == 'ADMIN'
