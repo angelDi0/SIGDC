@@ -1,7 +1,21 @@
 from django.urls import path
-from usuarios import views
+from . import views
+
+# ...existing code...
+
+app_name = 'usuarios'
 
 urlpatterns = [
+    # API existente (se mantiene)
     path('', views.PerfilList.as_view(), name='perfil-list'),
+
+    # vistas de frontend
     path('index/', views.index, name='index'),
+    path('login/', views.index, name='login'),
+
+    # registro
+    path('registro/', views.registro, name='registro'),
+
+    # opción: exponer la API en una ruta dedicada además de la raíz si se desea
+    path('api/perfiles/', views.PerfilList.as_view(), name='api-perfil-list'),
 ]
