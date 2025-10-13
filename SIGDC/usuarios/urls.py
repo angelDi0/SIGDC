@@ -22,6 +22,8 @@ urlpatterns = [
 
     # admin de usuarios (solo staff)
     path('admin-users/', views.admin_users, name='admin_users'),
+    # editar usuario (solo staff, solo para usuarios no-admin)
+    path('admin-users/edit/<int:user_id>/', views.admin_edit_user, name='admin_edit_user'),
 
     # opción: exponer la API en una ruta dedicada además de la raíz si se desea
     path('api/perfiles/', views.PerfilList.as_view(), name='api-perfil-list'),

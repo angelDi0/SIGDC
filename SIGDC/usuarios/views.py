@@ -62,23 +62,37 @@ def index(request):
 
 def registro(request):
     """
-    Registro simple usando UserCreationForm.
-    Guarda first_name, last_name y email si se proporcionan en el POST.
+    Registro usando UserCreationForm. Guarda first_name, last_name y email del POST.
     """
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
+
+        # traducir etiquetas y añadir attrs a widgets 
+        form.fields['username'].label = 'Nombre de usuario'
+        form.fields['password1'].label = 'Contraseña'
+        form.fields['password2'].label = 'Confirmar contraseña'
+        form.fields['username'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Nombre de usuario'})
+        form.fields['password1'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Contraseña'})
+        form.fields['password2'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Confirmar contraseña'})
+
         if form.is_valid():
             user = form.save(commit=False)
-            user.first_name = request.POST.get('first_name', '') or user.first_name
-            user.last_name = request.POST.get('last_name', '') or user.last_name
-            user.email = request.POST.get('email', '') or user.email
+            user.first_name = request.POST.get('first_name', '').strip()
+            user.last_name = request.POST.get('last_name', '').strip()
+            user.email = request.POST.get('email', '').strip()
             user.save()
             messages.success(request, 'Cuenta creada correctamente. Ya puedes iniciar sesión.')
             return redirect('usuarios:login')
         else:
-            messages.error(request, 'Corrige los errores del formulario.')
+            return render(request, 'usuarios/registro.html', {'form': form})
     else:
         form = UserCreationForm()
+        form.fields['username'].label = 'Nombre de usuario'
+        form.fields['password1'].label = 'Contraseña'
+        form.fields['password2'].label = 'Confirmar contraseña'
+        form.fields['username'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Nombre de usuario'})
+        form.fields['password1'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Contraseña'})
+        form.fields['password2'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Confirmar contraseña'})
 
     return render(request, 'usuarios/registro.html', {'form': form})
 
@@ -117,3 +131,50 @@ def admin_users(request):
 
     users = User.objects.order_by('-date_joined').all()
     return render(request, 'usuarios/admin.html', {'users': users})
+
+@staff_member_required
+def admin_edit_user(request, user_id):
+    """
+    Editar datos de un usuario (solo si no es staff).
+    Solo staff (administradores) pueden acceder a esta vista.
+    """
+    target = get_object_or_404(User, pk=user_id)
+
+    # No permitir editar usuarios staff
+    if target.is_staff:
+        messages.error(request, 'No se pueden editar usuarios con privilegios de administrador.')
+        return redirect('usuarios:admin_users')
+
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        email = request.POST.get('email', '').strip()
+        is_active = True if request.POST.get('is_active') == 'on' else False
+
+        # Validaciones básicas
+        if not username:
+            messages.error(request, 'El nombre de usuario no puede estar vacío.')
+            return render(request, 'usuarios/admin_edit.html', {'u': target})
+
+        if User.objects.filter(username=username).exclude(pk=target.pk).exists():
+            messages.error(request, 'El nombre de usuario ya está en uso por otro usuario.')
+            return render(request, 'usuarios/admin_edit.html', {'u': target})
+
+        if email and User.objects.filter(email=email).exclude(pk=target.pk).exists():
+            messages.error(request, 'El correo ya está en uso por otro usuario.')
+            return render(request, 'usuarios/admin_edit.html', {'u': target})
+
+        # Guardar cambios
+        target.username = username
+        target.first_name = first_name
+        target.last_name = last_name
+        target.email = email
+        target.is_active = is_active
+        target.save()
+
+        messages.success(request, f'Usuario "{target.username}" actualizado correctamente.')
+        return redirect('usuarios:admin_users')
+
+    # GET: mostrar formulario con datos actuales
+    return render(request, 'usuarios/admin_edit.html', {'u': target})
