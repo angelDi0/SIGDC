@@ -29,7 +29,22 @@
         </div>
 
         <div class="auth-body">
-          <!-- Si usas un Django Form, pásalo en el contexto como "form" -->
+          {% if messages %}
+            {% for message in messages %}
+              <div class="alert alert-{{ message.tags|default:'info' }} py-2">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+
+          {% if errors_list %}
+            <div class="alert alert-danger small mb-3">
+              <ul class="mb-0">
+                {% for e in errors_list %}
+                  <li>{{ e }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+
           <form method="post" action="{% url 'usuarios:registro' %}" novalidate>
             {% csrf_token %}
             {% if form %}

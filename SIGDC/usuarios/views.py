@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 
@@ -52,7 +53,7 @@ def index(request):
         if user:
             login(request, user)
             messages.success(request, 'Has iniciado sesión correctamente.')
-            return redirect('usuarios:index')
+            return redirect('usuarios:menu')
         else:
             messages.error(request, 'Usuario o contraseña incorrectos.')
 
@@ -80,3 +81,17 @@ def registro(request):
         form = UserCreationForm()
 
     return render(request, 'usuarios/registro.html', {'form': form})
+
+
+@login_required
+def menu(request):
+    """Vista del menú principal. Requiere autenticación."""
+    return render(request, 'SIGDC/menu.html')
+
+
+@login_required
+def salir(request):
+    """Logout y redirección al login."""
+    logout(request)
+    messages.info(request, 'Has cerrado sesión.')
+    return redirect('usuarios:login')
