@@ -4,13 +4,13 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
-
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
 from .models import Perfil
 from .serializers import PerfilSerializer
+from django.contrib.admin.views.decorators import staff_member_required
+from django.shortcuts import get_object_or_404
 
 # ...existing code...
 
@@ -95,3 +95,25 @@ def salir(request):
     logout(request)
     messages.info(request, 'Has cerrado sesión.')
     return redirect('usuarios:login')
+
+@staff_member_required
+def admin_users(request):
+    """
+    Lista usuarios y procesa eliminación vía POST (solo staff).
+    URL: /usuarios/admin-users/
+    """
+    if request.method == 'POST':
+        delete_id = request.POST.get('delete_user_id')
+        if delete_id:
+            # evitar que un admin se elimine a sí mismo
+            if str(request.user.id) == str(delete_id):
+                messages.error(request, 'No puedes eliminarte a ti mismo.')
+            else:
+                target = get_object_or_404(User, pk=delete_id)
+                username = target.username
+                target.delete()
+                messages.success(request, f'Usuario "{username}" eliminado.')
+        return redirect('usuarios:admin_users')
+
+    users = User.objects.order_by('-date_joined').all()
+    return render(request, 'usuarios/admin.html', {'users': users})
