@@ -1,0 +1,35 @@
+<div class="container py-3">
+  <h4>Solicitud — {{ s.titulo|default:s.tipo }}</h4>
+  <hr>
+  <dl class="row">
+    <dt class="col-sm-3">Solicitante</dt>
+    <dd class="col-sm-9">{{ s.solicitante.user.get_full_name|default:s.solicitante.user.username }}</dd>
+
+    <dt class="col-sm-3">Donación</dt>
+    <dd class="col-sm-9">{{ s.donacion.titulo|default:s.donacion }}</dd>
+
+    <dt class="col-sm-3">Mensaje</dt>
+    <dd class="col-sm-9">{{ s.mensaje|linebreaksbr|default:"—" }}</dd>
+
+    <dt class="col-sm-3">Fecha</dt>
+    <dd class="col-sm-9">{{ s.fecha_solicitud }}</dd>
+
+    <dt class="col-sm-3">Aprobada</dt>
+    <dd class="col-sm-9">{% if s.aprobada %}Sí{% else %}No{% endif %}</dd>
+  </dl>
+
+  {% if s.transaccion %}
+    <hr>
+    <h5>Transacción</h5>
+    <dl class="row">
+      <dt class="col-sm-3">Fecha entrega</dt>
+      <dd class="col-sm-9">{{ s.transaccion.fecha_entrega }}</dd>
+
+      <dt class="col-sm-3">Confirmación donante</dt>
+      <dd class="col-sm-9">{% if s.transaccion.confirmacion_donante %}Sí{% else %}No{% endif %}</dd>
+
+      <dt class="col-sm-3">Confirmación solicitante</dt>
+      <dd class="col-sm-9">{% if s.transaccion.confirmacion_solicitante %}Sí{% else %}No{% endif %}</dd>
+    </dl>
+  {% endif %}
+</div>

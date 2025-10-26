@@ -11,6 +11,8 @@ from .models import Perfil
 from .serializers import PerfilSerializer
 from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import get_object_or_404
+from donaciones.models import Donacion
+from solicitudes.models import Solicitud
 
 # ...existing code...
 
@@ -99,8 +101,9 @@ def registro(request):
 
 @login_required
 def menu(request):
-    """Vista del menú principal. Requiere autenticación."""
-    return render(request, 'SIGDC/menu.html')
+    donaciones = Donacion.objects.order_by('-id')[:10]   # ajustar orden/cantidad
+    solicitudes = Solicitud.objects.order_by('-id')[:10]
+    return render(request, 'SIGDC/menu.html', {'donaciones': donaciones, 'solicitudes': solicitudes})
 
 
 @login_required

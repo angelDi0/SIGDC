@@ -10,8 +10,13 @@
     <nav class="navbar navbar-expand-lg navbar-white bg-white border-bottom">
       <div class="container">
         <a class="navbar-brand" href="#">SIGDC</a>
+
         <div class="collapse navbar-collapse">
-          <ul class="navbar-nav ms-auto">
+          <ul class="navbar-nav ms-auto align-items-center">
+            <!-- Enlaces para crear (van a las páginas completas de creación) -->
+            <li class="nav-item me-2"><a class="nav-link" href="{% url 'solicitudes:crear' %}">Crear solicitud</a></li>
+            <li class="nav-item me-3"><a class="nav-link" href="{% url 'donaciones:crear' %}">Crear donación</a></li>
+
             <li class="nav-item"><a class="nav-link" href="{% url 'usuarios:logout' %}">Salir</a></li>
           </ul>
         </div>
@@ -19,12 +24,226 @@
     </nav>
 
     <main class="container py-5">
-      <h1 class="mb-3">Bienvenido</h1>
-      <p class="text-muted">Has iniciado sesión correctamente. Aquí va el contenido del menú principal.</p>
+      <h1 class="mb-4">Bienvenido</h1>
+
+      <!-- Sección: Solicitudes -->
+      <section class="mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h5 mb-0">Solicitudes</h2>
+          <small class="text-muted">Ver y crear solicitudes</small>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="card h-100">
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title">Solicitud - Tipo A</h5>
+                <p class="card-text text-muted mb-3">Registrar nueva solicitud tipo A.</p>
+                <div class="mt-auto">
+                  <a class="btn btn-primary w-100" href="{% url 'solicitudes:crear' %}?tipo=A">Crear</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="card h-100">
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title">Solicitud - Tipo B</h5>
+                <p class="card-text text-muted mb-3">Registrar nueva solicitud tipo B.</p>
+                <div class="mt-auto">
+                  <a class="btn btn-primary w-100" href="{% url 'solicitudes:crear' %}?tipo=B">Crear</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="card h-100">
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title">Solicitud - Tipo C</h5>
+                <p class="card-text text-muted mb-3">Registrar nueva solicitud tipo C.</p>
+                <div class="mt-auto">
+                  <a class="btn btn-primary w-100" href="{% url 'solicitudes:crear' %}?tipo=C">Crear</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lista reciente -->
+        <div class="mt-4">
+          <h6 class="small text-muted mb-2">Últimas solicitudes</h6>
+          <ul class="list-group">
+            {% for s in solicitudes %}
+              <li class="list-group-item d-flex justify-content-between align-items-start">
+                <div>
+                  <strong>{{ s.titulo|default:s.tipo }}</strong><br>
+                  <small class="text-muted">{{ s.detalle|default:"-"|truncatechars:80 }}</small>
+                </div>
+
+                <div class="text-end">
+                  <small class="text-muted d-block mb-2">{{ s.created|default:s.id }}</small>
+                  <button
+                    class="btn btn-sm btn-outline-primary open-detail"
+                    data-url="{% url 'solicitudes:detalle' s.id %}"
+                    data-title="Solicitud — {{ s.titulo|default:s.tipo }}">Ver más detalles</button>
+                </div>
+              </li>
+            {% empty %}
+              <li class="list-group-item text-muted">No hay solicitudes.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </section>
+
+      <!-- Sección: Donaciones -->
+      <section class="mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h5 mb-0">Donaciones</h2>
+          <small class="text-muted">Ver y crear donaciones</small>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="card h-100">
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title">Donación — Monetaria</h5>
+                <p class="card-text text-muted mb-3">Registrar donación en efectivo.</p>
+                <div class="mt-auto">
+                  <a class="btn btn-success w-100" href="{% url 'donaciones:crear' %}?tipo=monetaria">Crear</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="card h-100">
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title">Donación — En especie</h5>
+                <p class="card-text text-muted mb-3">Registrar donación en especie.</p>
+                <div class="mt-auto">
+                  <a class="btn btn-success w-100" href="{% url 'donaciones:crear' %}?tipo=especie">Crear</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="card h-100">
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title">Donación — Voluntariado</h5>
+                <p class="card-text text-muted mb-3">Registrar aportes de tiempo / voluntariado.</p>
+                <div class="mt-auto">
+                  <a class="btn btn-success w-100" href="{% url 'donaciones:crear' %}?tipo=voluntariado">Crear</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lista reciente -->
+        <div class="mt-4">
+          <h6 class="small text-muted mb-2">Últimas donaciones</h6>
+          <ul class="list-group">
+            {% for d in donaciones %}
+              <li class="list-group-item d-flex justify-content-between align-items-start">
+                <div>
+                  <strong>{{ d.tipo|default:"Donación" }}</strong> — {{ d.origen|default:"-" }}<br>
+                  <small class="text-muted">{{ d.descripcion|default:"-"|truncatechars:80 }}</small>
+                </div>
+
+                <div class="text-end">
+                  <small class="text-muted d-block mb-2">{{ d.created|default:d.id }}</small>
+                  <button
+                    class="btn btn-sm btn-outline-primary open-detail"
+                    data-url="{% url 'donaciones:detalle' d.id %}"
+                    data-title="Donación — {{ d.tipo|default:'Donación' }}">Ver más detalles</button>
+                </div>
+              </li>
+            {% empty %}
+              <li class="list-group-item text-muted">No hay donaciones.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </section>
     </main>
+
+    <!-- Modal detalle reutilizable -->
+    <div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="detailModalLabel"></h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">
+            <div class="text-center py-5 text-muted">Cargando...</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <footer class="text-center py-4 text-muted">&copy; SIGDC</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      (function(){
+        const modalEl = document.getElementById('detailModal');
+        const modal = new bootstrap.Modal(modalEl);
+        const modalTitle = modalEl.querySelector('.modal-title');
+        const modalBody = modalEl.querySelector('.modal-body');
+
+        async function loadDetail(url, title) {
+          modalTitle.textContent = title || '';
+          modalBody.innerHTML = '<div class="text-center py-5 text-muted">Cargando...</div>';
+          modal.show();
+          try {
+            const resp = await fetch(url, { headers: {'X-Requested-With':'XMLHttpRequest'} });
+            if (!resp.ok) throw new Error('Error al cargar detalle');
+            const html = await resp.text();
+            modalBody.innerHTML = html;
+          } catch (err) {
+            console.error(err);
+            modalBody.innerHTML = '<div class="alert alert-danger">No se pudo cargar la información.</div>';
+          }
+        }
+
+        document.querySelectorAll('.open-detail').forEach(btn=>{
+          btn.addEventListener('click', ()=> loadDetail(btn.dataset.url, btn.dataset.title));
+        });
+      })();
+
+      // helper CSRF
+      function getCookie(name) {
+      const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+      return v ? v.pop() : '';
+      }
+      const csrftoken = getCookie('csrftoken');
+
+      // petición dependiente: obtener tipos distintos (simple) y luego donaciones para el primer tipo
+      async function cargarDonacionesPorPrimerTipo() {
+      try {
+        // 1) pedimos todas las donaciones y construimos la lista de tipos
+        const allResp = await fetch('/donaciones/api/donaciones/');
+        const all = await allResp.json();
+        const tipos = Array.from(new Set(all.map(d => d.tipo).filter(Boolean)));
+        if (!tipos.length) return;
+        const tipo = tipos[0];
+        // 2) pedimos donaciones por tipo
+        const resp = await fetch(`/donaciones/api/donaciones/?tipo=${encodeURIComponent(tipo)}`);
+        const donaciones = await resp.json();
+        console.log('Tipos encontrados', tipos);
+        console.log('Donaciones para', tipo, donaciones);
+        // actualizar DOM según tu diseño
+      } catch (e) {
+        console.error('Error peticion dependiente', e);
+      }
+    }
+
+        // Llamar al cargar la página para demo
+        document.addEventListener('DOMContentLoaded', cargarDonacionesPorPrimerTipo);
+
+    </script>
   </body>
 </html>

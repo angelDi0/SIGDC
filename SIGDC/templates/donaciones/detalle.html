@@ -1,0 +1,20 @@
+<div class="container py-3">
+  <h4>Donación — {{ d.titulo|default:d.tipo }}</h4>
+  <hr>
+  <dl class="row">
+    <dt class="col-sm-3">Tipo</dt>
+    <dd class="col-sm-9">{{ d.tipo|default:"—" }}</dd>
+
+    <dt class="col-sm-3">Origen</dt>
+    <dd class="col-sm-9">{{ d.origen|default:"—" }}</dd>
+
+    <dt class="col-sm-3">Monto</dt>
+    <dd class="col-sm-9">{{ d.monto|default:"—" }}</dd>
+
+    <dt class="col-sm-3">Descripción</dt>
+    <dd class="col-sm-9">{{ d.descripcion|linebreaksbr|default:"—" }}</dd>
+
+    <dt class="col-sm-3">Fecha</dt>
+    <dd class="col-sm-9">{{ d.created|default:d.id }}</dd>
+  </dl>
+</div>
