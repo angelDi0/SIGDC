@@ -5,279 +5,446 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Menu - SIGDC</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+      .list-group-item .badge { margin-left: 0.5rem; }
+      .detail-img { max-height: 240px; max-width: 100%; object-fit: contain; display:block; margin-top:.5rem; }
+      .detail-dl dt { font-weight:600; }
+      .form-row { margin-bottom:.75rem; }
+      .field-label { font-weight:600; margin-bottom:.25rem; display:block; }
+    </style>
   </head>
   <body class="bg-light">
     <nav class="navbar navbar-expand-lg navbar-white bg-white border-bottom">
       <div class="container">
         <a class="navbar-brand" href="#">SIGDC</a>
-
-        <div class="collapse navbar-collapse">
-          <ul class="navbar-nav ms-auto align-items-center">
-            <!-- Enlaces para crear (van a las páginas completas de creación) -->
-            <li class="nav-item me-2"><a class="nav-link" href="{% url 'solicitudes:crear' %}">Crear solicitud</a></li>
-            <li class="nav-item me-3"><a class="nav-link" href="{% url 'donaciones:crear' %}">Crear donación</a></li>
-
-            <li class="nav-item"><a class="nav-link" href="{% url 'usuarios:logout' %}">Salir</a></li>
-          </ul>
+        <div>
+          <a id="btn-crear-donacion" class="btn btn-sm btn-success me-2" href="/donaciones/crear/">Crear donación</a>
+          <a id="btn-crear-solicitud" class="btn btn-sm btn-primary" href="/solicitudes/crear/">Crear solicitud</a>
         </div>
       </div>
     </nav>
 
     <main class="container py-5">
-      <h1 class="mb-4">Bienvenido</h1>
-
-      <!-- Sección: Solicitudes -->
-      <section class="mb-5">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h2 class="h5 mb-0">Solicitudes</h2>
-          <small class="text-muted">Ver y crear solicitudes</small>
+      <div class="row">
+        <div class="col-md-6 mb-4">
+          <h5>Donaciones</h5>
+          <div id="donaciones-list" class="list-group"></div>
         </div>
-
-        <div class="row g-3">
-          <div class="col-md-4">
-            <div class="card h-100">
-              <div class="card-body d-flex flex-column">
-                <h5 class="card-title">Solicitud - Tipo A</h5>
-                <p class="card-text text-muted mb-3">Registrar nueva solicitud tipo A.</p>
-                <div class="mt-auto">
-                  <a class="btn btn-primary w-100" href="{% url 'solicitudes:crear' %}?tipo=A">Crear</a>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-4">
-            <div class="card h-100">
-              <div class="card-body d-flex flex-column">
-                <h5 class="card-title">Solicitud - Tipo B</h5>
-                <p class="card-text text-muted mb-3">Registrar nueva solicitud tipo B.</p>
-                <div class="mt-auto">
-                  <a class="btn btn-primary w-100" href="{% url 'solicitudes:crear' %}?tipo=B">Crear</a>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-4">
-            <div class="card h-100">
-              <div class="card-body d-flex flex-column">
-                <h5 class="card-title">Solicitud - Tipo C</h5>
-                <p class="card-text text-muted mb-3">Registrar nueva solicitud tipo C.</p>
-                <div class="mt-auto">
-                  <a class="btn btn-primary w-100" href="{% url 'solicitudes:crear' %}?tipo=C">Crear</a>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div class="col-md-6 mb-4">
+          <h5>Solicitudes</h5>
+          <div id="solicitudes-list" class="list-group"></div>
         </div>
-
-        <!-- Lista reciente -->
-        <div class="mt-4">
-          <h6 class="small text-muted mb-2">Últimas solicitudes</h6>
-          <ul class="list-group">
-            {% for s in solicitudes %}
-              <li class="list-group-item d-flex justify-content-between align-items-start">
-                <div>
-                  <strong>{{ s.titulo|default:s.tipo }}</strong><br>
-                  <small class="text-muted">{{ s.detalle|default:"-"|truncatechars:80 }}</small>
-                </div>
-
-                <div class="text-end">
-                  <small class="text-muted d-block mb-2">{{ s.created|default:s.id }}</small>
-                  <button
-                    class="btn btn-sm btn-outline-primary open-detail"
-                    data-url="{% url 'solicitudes:detalle' s.id %}"
-                    data-title="Solicitud — {{ s.titulo|default:s.tipo }}">Ver más detalles</button>
-                </div>
-              </li>
-            {% empty %}
-              <li class="list-group-item text-muted">No hay solicitudes.</li>
-            {% endfor %}
-          </ul>
-        </div>
-      </section>
-
-      <!-- Sección: Donaciones -->
-      <section class="mb-5">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h2 class="h5 mb-0">Donaciones</h2>
-          <small class="text-muted">Ver y crear donaciones</small>
-        </div>
-
-        <div class="row g-3">
-          <div class="col-md-4">
-            <div class="card h-100">
-              <div class="card-body d-flex flex-column">
-                <h5 class="card-title">Donación — Monetaria</h5>
-                <p class="card-text text-muted mb-3">Registrar donación en efectivo.</p>
-                <div class="mt-auto">
-                  <a class="btn btn-success w-100" href="{% url 'donaciones:crear' %}?tipo=monetaria">Crear</a>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-4">
-            <div class="card h-100">
-              <div class="card-body d-flex flex-column">
-                <h5 class="card-title">Donación — En especie</h5>
-                <p class="card-text text-muted mb-3">Registrar donación en especie.</p>
-                <div class="mt-auto">
-                  <a class="btn btn-success w-100" href="{% url 'donaciones:crear' %}?tipo=especie">Crear</a>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-4">
-            <div class="card h-100">
-              <div class="card-body d-flex flex-column">
-                <h5 class="card-title">Donación — Voluntariado</h5>
-                <p class="card-text text-muted mb-3">Registrar aportes de tiempo / voluntariado.</p>
-                <div class="mt-auto">
-                  <a class="btn btn-success w-100" href="{% url 'donaciones:crear' %}?tipo=voluntariado">Crear</a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Lista reciente -->
-        <div class="mt-4">
-          <h6 class="small text-muted mb-2">Últimas donaciones</h6>
-          <ul class="list-group">
-            {% for d in donaciones %}
-              <li class="list-group-item d-flex justify-content-between align-items-start">
-                <div>
-                  <strong>{{ d.tipo|default:"Donación" }}</strong> — {{ d.origen|default:"-" }}<br>
-                  <small class="text-muted">{{ d.descripcion|default:"-"|truncatechars:80 }}</small>
-                </div>
-
-                <div class="text-end">
-                  <small class="text-muted d-block mb-2">{{ d.created|default:d.id }}</small>
-                  <button
-                    class="btn btn-sm btn-outline-primary open-detail"
-                    data-url="{% url 'donaciones:detalle' d.id %}"
-                    data-title="Donación — {{ d.tipo|default:'Donación' }}">Ver más detalles</button>
-                </div>
-              </li>
-            {% empty %}
-              <li class="list-group-item text-muted">No hay donaciones.</li>
-            {% endfor %}
-          </ul>
-        </div>
-      </section>
+      </div>
     </main>
 
     <!-- Modal detalle reutilizable -->
     <div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="detailModalLabel"></h5>
+            <h5 class="modal-title" id="detailModalLabel">Detalle</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
           </div>
-          <div class="modal-body">
-            <div class="text-center py-5 text-muted">Cargando...</div>
+          <div class="modal-body" id="detailModalBody">
+            <!-- contenido cargado por JS -->
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Modal editar donación -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <form id="editForm" class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editModalLabel">Editar donación</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body" id="editModalBody">
+            <!-- formulario generado dinámicamente -->
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button id="editSaveBtn" type="submit" class="btn btn-primary">Guardar cambios</button>
+          </div>
+        </form>
       </div>
     </div>
 
     <footer class="text-center py-4 text-muted">&copy; SIGDC</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
-      (function(){
-        const modalEl = document.getElementById('detailModal');
-        const modal = new bootstrap.Modal(modalEl);
-        const modalTitle = modalEl.querySelector('.modal-title');
-        const modalBody = modalEl.querySelector('.modal-body');
-
-        async function loadDetail(url, title) {
-          modalTitle.textContent = title || '';
-          modalBody.innerHTML = '<div class="text-center py-5 text-muted">Cargando...</div>';
-          modal.show();
-          try {
-            const resp = await fetch(url, { headers: {'X-Requested-With':'XMLHttpRequest'} });
-            if (!resp.ok) throw new Error('Error al cargar detalle');
-            const html = await resp.text();
-            modalBody.innerHTML = html;
-          } catch (err) {
-            console.error(err);
-            modalBody.innerHTML = '<div class="alert alert-danger">No se pudo cargar la información.</div>';
-          }
-        }
-
-        document.querySelectorAll('.open-detail').forEach(btn=>{
-          btn.addEventListener('click', ()=> loadDetail(btn.dataset.url, btn.dataset.title));
-        });
-      })();
-
-      // helper CSRF
-      function getCookie(name) {
-      const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
-      return v ? v.pop() : '';
-      }
+      function getCookie(name){ const v=document.cookie.match('(^|;)\\s*'+name+'\\s*=\\s*([^;]+)'); return v? v.pop():''; }
       const csrftoken = getCookie('csrftoken');
 
-      // petición dependiente: obtener tipos distintos (simple) y luego donaciones para el primer tipo
-      async function cargarDonacionesPorPrimerTipo() {
-      try {
-        // 1) pedimos todas las donaciones y construimos la lista de tipos
-        const allResp = await fetch('/donaciones/api/donaciones/');
-        const all = await allResp.json();
-        const tipos = Array.from(new Set(all.map(d => d.tipo).filter(Boolean)));
-        if (!tipos.length) return;
-        const tipo = tipos[0];
-        // 2) pedimos donaciones por tipo
-        const resp = await fetch(`/donaciones/api/donaciones/?tipo=${encodeURIComponent(tipo)}`);
-        const donaciones = await resp.json();
-        console.log('Tipos encontrados', tipos);
-        console.log('Donaciones para', tipo, donaciones);
-        // actualizar el DOM 
-      } catch (e) {
-        console.error('Error peticion dependiente', e);
-      }
-    }
+      // Normaliza y devuelve clase + texto para badge de estado
+      function badgeClassForEstado(estado){
+        if(!estado) return { cls: 'bg-secondary', text: 'Sin estado' };
+        const s = String(estado).toLowerCase();
+        const display = String(estado).charAt(0).toUpperCase() + String(estado).slice(1).toLowerCase();
+        const green = ['disponible','activo','en proceso','en marcha','activa','enproceso','en_proceso'];
+        const yellow = ['pendiente','por confirmar','en espera'];
+        const red = ['finalizada','cancelada','rechazada','terminada','terminado'];
 
-      // eliminar (async/await)
-      async function eliminarSolicitud(id) {
-      try {
-        const resp = await fetch(`/solicitudes/api/solicitudes/${id}/`, {
-          method: 'DELETE',
-          headers: { 'X-CSRFToken': csrftoken }
-        });
-        if (resp.status === 204) {
-          console.log('Eliminada', id);
-          // actualizar el DOM
-      } else {
-        console.error('Error al eliminar', resp.status);
+        if (green.some(x => s.includes(x))) return { cls: 'bg-success', text: display };
+        if (yellow.some(x => s.includes(x))) return { cls: 'bg-warning text-dark', text: display };
+        if (red.some(x => s.includes(x))) return { cls: 'bg-danger', text: display };
+        return { cls: 'bg-secondary', text: display };
       }
-      } catch (e) {
-      console.error('Network error', e);
-      } 
-    }
 
-      // actualizar (PUT)
-      async function actualizarSolicitud(id, payload) {
-        try {
-          const resp = await fetch(`/solicitudes/api/solicitudes/${id}/`, {
-            method: 'PUT',
-            headers: { 'Content-Type':'application/json', 'X-CSRFToken': csrftoken },
-            body: JSON.stringify(payload)
+      async function loadDonaciones(){
+        try{
+          const resp = await fetch('/donaciones/api/donaciones/', { credentials: 'same-origin' });
+          if(!resp.ok) throw resp;
+          const data = await resp.json();
+          const container = document.getElementById('donaciones-list');
+          container.innerHTML = '';
+          if(!data || !data.length) {
+            container.innerHTML = '<div class="text-muted p-2">No hay donaciones</div>';
+            return;
+          }
+          data.forEach(d => {
+            const estadoInfo = badgeClassForEstado(d.estado);
+            const item = document.createElement('div');
+            item.className = 'list-group-item d-flex justify-content-between align-items-start';
+            item.innerHTML = `
+              <div>
+                <div><strong>${escapeHtml(d.titulo ?? d.tipo ?? 'Sin título')}</strong></div>
+                <div class="small text-muted">${escapeHtml(d.descripcion ? d.descripcion.substring(0,80) : '')}</div>
+              </div>
+              <div class="d-flex align-items-center">
+                <span class="badge ${estadoInfo.cls}">${escapeHtml(estadoInfo.text)}</span>
+                <div class="btn-group btn-group-sm ms-2">
+                  <button class="btn btn-outline-secondary" onclick="openDonacionDetail(${d.id})">Ver</button>
+                  <button class="btn btn-outline-primary" onclick="openDonacionEdit(${d.id})">Editar</button>
+                  <button class="btn btn-outline-danger" onclick="deleteDonacion(${d.id})">Eliminar</button>
+                </div>
+              </div>
+            `;
+            container.appendChild(item);
           });
-          if (!resp.ok) throw resp;
-          const updated = await resp.json();
-          console.log('Actualizada', updated);
-        } catch (e) {
-          console.error('Error actualizar', e);
+        }catch(e){
+          console.error('Error cargando donaciones', e);
+          document.getElementById('donaciones-list').innerHTML = '<div class="text-danger p-2">Error cargando donaciones</div>';
         }
       }
 
-        // Llamar al cargar la página para demo
-        document.addEventListener('DOMContentLoaded', cargarDonacionesPorPrimerTipo);
+      async function loadSolicitudes(){
+        try{
+          const resp = await fetch('/solicitudes/api/solicitudes/', { credentials: 'same-origin' });
+          if(!resp.ok) throw resp;
+          const data = await resp.json();
+          const container = document.getElementById('solicitudes-list');
+          container.innerHTML = '';
+          if(!data.length){
+            container.innerHTML = '<div class="text-muted p-2">No hay solicitudes</div>';
+            return;
+          }
+          data.forEach(s => {
+            const item = document.createElement('div');
+            item.className = 'list-group-item d-flex justify-content-between align-items-start';
+            item.innerHTML = `
+              <div>
+                <strong>${escapeHtml(s.titulo ?? s.tipo ?? 'Sin título')}</strong>
+                <div class="small text-muted">${escapeHtml(s.detalle ? s.detalle.substring(0,80) : '')}</div>
+              </div>
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-secondary" onclick="openSolicitudDetail(${s.id})">Ver</button>
+                <button class="btn btn-outline-danger" onclick="deleteSolicitud(${s.id})">Eliminar</button>
+              </div>
+            `;
+            container.appendChild(item);
+          });
+        }catch(e){
+          console.error('Error cargando solicitudes', e);
+          document.getElementById('solicitudes-list').innerHTML = '<div class="text-danger p-2">Error cargando solicitudes</div>';
+        }
+      }
 
+      // Muestra todos los campos que devuelve la API para una donación
+      async function openDonacionDetail(id){
+        try{
+          const resp = await fetch(`/donaciones/api/donaciones/${id}/`, { credentials: 'same-origin' });
+          if(!resp.ok) throw resp;
+          const d = await resp.json();
+          const body = document.getElementById('detailModalBody');
+
+          const title = escapeHtml(d.titulo ?? d.tipo ?? `Donación #${d.id ?? ''}`);
+          let html = `<h5>${title}</h5>`;
+
+          if(d.estado){
+            const estadoInfo = badgeClassForEstado(d.estado);
+            html += `<p><strong>Estado:</strong> <span class="badge ${estadoInfo.cls}">${escapeHtml(estadoInfo.text)}</span></p>`;
+          }
+
+          html += '<dl class="row detail-dl">';
+          const skip = new Set(['id','titulo','tipo','estado','descripcion']);
+          for(const [k, v] of Object.entries(d)){
+            if(skip.has(k)) continue;
+            if(v === null || v === undefined || v === '') continue;
+
+            const label = k.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+
+            if(/imagen|foto|file|url/i.test(k) && (typeof v === 'string') && (v.startsWith('http') || v.startsWith('/'))){
+              html += `<dt class="col-sm-4">${escapeHtml(label)}</dt><dd class="col-sm-8"><img src="${escapeHtml(v)}" class="detail-img" alt="${escapeHtml(label)}"></dd>`;
+              continue;
+            }
+
+            if(typeof v === 'object'){
+              if(v && (v.nombre || v.nombre_completo || v.email || v.id)){
+                const parts = [];
+                if(v.nombre) parts.push(escapeHtml(v.nombre));
+                if(v.nombre_completo) parts.push(escapeHtml(v.nombre_completo));
+                if(v.email) parts.push(`<small class="text-muted">${escapeHtml(v.email)}</small>`);
+                if(v.id) parts.push(`(id:${escapeHtml(String(v.id))})`);
+                html += `<dt class="col-sm-4">${escapeHtml(label)}</dt><dd class="col-sm-8">${parts.join(' ')}</dd>`;
+              } else {
+                html += `<dt class="col-sm-4">${escapeHtml(label)}</dt><dd class="col-sm-8"><pre class="mb-0">${escapeHtml(JSON.stringify(v, null, 2))}</pre></dd>`;
+              }
+              continue;
+            }
+
+            html += `<dt class="col-sm-4">${escapeHtml(label)}</dt><dd class="col-sm-8">${escapeHtml(String(v))}</dd>`;
+          }
+          html += '</dl>';
+
+          if(d.descripcion){
+            html += `<hr><div><strong>Descripción</strong><p>${escapeHtml(d.descripcion).replace(/\n/g,'<br>')}</p></div>`;
+          }
+
+          body.innerHTML = html;
+          new bootstrap.Modal(document.getElementById('detailModal')).show();
+        }catch(e){
+          console.error('Error detalle donación', e);
+          alert('No se pudo cargar detalle de donación.');
+        }
+      }
+
+      // ABRIR MODAL EDITAR (construye formulario dinámico según JSON de la API)
+      let currentEditId = null;
+      async function openDonacionEdit(id){
+        try{
+          const resp = await fetch(`/donaciones/api/donaciones/${id}/`, { credentials: 'same-origin' });
+          if(!resp.ok) throw resp;
+          const d = await resp.json();
+          currentEditId = id;
+          const body = document.getElementById('editModalBody');
+          body.innerHTML = '';
+
+          // quitar: id, created/updated y campos indeseados (categoria, imagen, fecha_publicacion, donante, estado)
+          const skip = new Set(['id','created_at','updated_at','categoria','imagen','fecha_publicacion','donante','estado']);
+          for(const [k, v] of Object.entries(d)){
+            if(skip.has(k)) continue;
+
+            const label = k.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+            const row = document.createElement('div');
+            row.className = 'form-row';
+
+            const lab = document.createElement('label');
+            lab.className = 'field-label';
+            lab.htmlFor = 'field-'+k;
+            lab.textContent = label;
+            row.appendChild(lab);
+
+            // otros tipos -> decidir input
+            let input;
+            if(typeof v === 'boolean'){
+              input = document.createElement('input');
+              input.type = 'checkbox';
+              input.id = 'field-'+k;
+              input.checked = !!v;
+              input.dataset.fieldType = 'boolean';
+            } else if(typeof v === 'number'){
+              input = document.createElement('input');
+              input.type = 'number';
+              input.id = 'field-'+k;
+              input.value = v;
+              input.className = 'form-control';
+            } else if(k === 'descripcion' || (typeof v === 'string' && v.length > 120)){
+              input = document.createElement('textarea');
+              input.id = 'field-'+k;
+              input.className = 'form-control';
+              input.rows = 4;
+              input.value = v ?? '';
+            } else {
+              input = document.createElement('input');
+              input.type = 'text';
+              input.id = 'field-'+k;
+              input.className = 'form-control';
+              input.value = v ?? '';
+            }
+
+            input.name = k;
+            row.appendChild(input);
+            body.appendChild(row);
+          }
+
+          const editModalEl = document.getElementById('editModal');
+          new bootstrap.Modal(editModalEl).show();
+
+          const form = document.getElementById('editForm');
+          form.onsubmit = submitDonacionEdit;
+        }catch(e){
+          console.error('Error al abrir editar', e);
+          alert('No se pudo cargar donación para editar.');
+        }
+      }
+
+      // ENVIAR PATCH al API con cambios
+      async function submitDonacionEdit(ev){
+        ev.preventDefault();
+        if(currentEditId === null) return;
+
+        const bodyEl = document.getElementById('editModalBody');
+        const inputs = bodyEl.querySelectorAll('[name]');
+        const payload = {};
+        inputs.forEach(inp => {
+          if(inp.type === 'checkbox'){
+            payload[inp.name] = inp.checked;
+            return;
+          }
+          if(inp.type === 'number'){
+            const val = inp.value;
+            payload[inp.name] = val === '' ? null : (val.includes('.') ? parseFloat(val) : parseInt(val,10));
+            return;
+          }
+          payload[inp.name] = inp.value;
+        });
+
+        console.log('Payload a enviar:', payload);
+
+        try{
+          const resp = await fetch(`/donaciones/api/donaciones/${currentEditId}/`, {
+            method: 'PATCH',
+            credentials: 'same-origin',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrftoken,
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify(payload)
+          });
+
+          if(!resp.ok){
+            let errText = '';
+            try {
+              const errJson = await resp.json();
+              errText = JSON.stringify(errJson);
+            } catch(e){
+              errText = await resp.text();
+            }
+            console.error('Error en actualización:', resp.status, errText);
+            alert('Error guardando: ' + (errText || resp.status));
+            return;
+          }
+
+          // éxito: cerrar modal y recargar lista
+          const editModalEl = document.getElementById('editModal');
+          bootstrap.Modal.getInstance(editModalEl).hide();
+          currentEditId = null;
+          await loadDonaciones();
+        }catch(err){
+          console.error('Error guardando', err);
+          alert('No se pudo guardar cambios. Revisa la consola.');
+        }
+      }
+
+      // ELIMINAR donación
+      async function deleteDonacion(id){
+        if(!confirm('Eliminar donación #' + id + ' ?')) return;
+        try{
+          const resp = await fetch(`/donaciones/api/donaciones/${id}/`, {
+            method: 'DELETE',
+            credentials: 'same-origin',
+            headers: { 'X-CSRFToken': csrftoken }
+          });
+          if(resp.status === 204 || resp.ok){
+            await loadDonaciones();
+          } else {
+            const text = await resp.text();
+            console.error('Error eliminar', resp.status, text);
+            alert('No se pudo eliminar (revisa permisos).');
+          }
+        }catch(e){
+          console.error('Network error', e);
+          alert('Error de red al eliminar.');
+        }
+      }
+
+      async function openSolicitudDetail(id){
+        try{
+          const resp = await fetch(`/solicitudes/api/solicitudes/${id}/`, { credentials: 'same-origin' });
+          if(!resp.ok) throw resp;
+          const s = await resp.json();
+          const body = document.getElementById('detailModalBody');
+          body.innerHTML = `
+            <h5>${escapeHtml(s.titulo ?? s.tipo)}</h5>
+            <p><strong>Detalle:</strong><br>${s.detalle ? escapeHtml(s.detalle).replace(/\n/g,'<br>') : '—'}</p>
+            <p><strong>Cantidad:</strong> ${escapeHtml(String(s.cantidad ?? '—'))}</p>
+            <p><strong>Aprobada:</strong> ${s.aprobada ? 'Sí' : 'No'}</p>
+          `;
+          new bootstrap.Modal(document.getElementById('detailModal')).show();
+        }catch(e){
+          console.error('Error detalle solicitud', e);
+          alert('No se pudo cargar detalle de solicitud.');
+        }
+      }
+
+      async function deleteSolicitud(id){
+        if(!confirm('Eliminar solicitud #' + id + '?')) return;
+        try{
+          const resp = await fetch(`/solicitudes/api/solicitudes/${id}/`, {
+            method: 'DELETE',
+            credentials: 'same-origin',
+            headers: { 'X-CSRFToken': csrftoken }
+          });
+          if(resp.status === 204){
+            await loadSolicitudes();
+          } else {
+            console.error('Error al eliminar', resp.status);
+            alert('No se pudo eliminar (revisa permisos)');
+          }
+        }catch(e){
+          console.error('Network error', e);
+          alert('Error de red al eliminar.');
+        }
+      }
+
+      // utilidad para escapar texto antes de inyectar en HTML
+      function escapeHtml(str){
+        if(str === null || str === undefined) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      async function cargarDependiente(){
+        try{
+          const allResp = await fetch('/donaciones/api/donaciones/', { credentials: 'same-origin' });
+          if(!allResp.ok) return;
+          const all = await allResp.json();
+          const tipos = Array.from(new Set(all.map(d => d.tipo).filter(Boolean)));
+          if(!tipos.length) return;
+          const tipo = tipos[0];
+          const resp = await fetch(`/donaciones/api/donaciones/?tipo=${encodeURIComponent(tipo)}`, { credentials: 'same-origin' });
+          if(!resp.ok) return;
+          const donaciones = await resp.json();
+          console.log('Dependiente:', tipo, donaciones);
+        }catch(e){
+          console.error('Dependiente error', e);
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        loadDonaciones();
+        loadSolicitudes();
+        cargarDependiente();
+      });
     </script>
   </body>
 </html>
