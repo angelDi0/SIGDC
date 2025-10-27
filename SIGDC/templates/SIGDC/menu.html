@@ -71,6 +71,25 @@
       </div>
     </div>
 
+    <!-- Modal editar solicitud -->
+    <div class="modal fade" id="editSolicitudModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <form id="editSolicitudForm" class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editSolicitudModalLabel">Editar solicitud</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body" id="editSolicitudModalBody">
+            <!-- formulario generado dinámicamente -->
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button id="editSolicitudSaveBtn" type="submit" class="btn btn-primary">Guardar cambios</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <footer class="text-center py-4 text-muted">&copy; SIGDC</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -79,7 +98,6 @@
       function getCookie(name){ const v=document.cookie.match('(^|;)\\s*'+name+'\\s*=\\s*([^;]+)'); return v? v.pop():''; }
       const csrftoken = getCookie('csrftoken');
 
-      // Normaliza y devuelve clase + texto para badge de estado
       function badgeClassForEstado(estado){
         if(!estado) return { cls: 'bg-secondary', text: 'Sin estado' };
         const s = String(estado).toLowerCase();
@@ -138,7 +156,7 @@
           const data = await resp.json();
           const container = document.getElementById('solicitudes-list');
           container.innerHTML = '';
-          if(!data.length){
+          if(!data || !data.length){
             container.innerHTML = '<div class="text-muted p-2">No hay solicitudes</div>';
             return;
           }
@@ -152,6 +170,7 @@
               </div>
               <div class="btn-group btn-group-sm">
                 <button class="btn btn-outline-secondary" onclick="openSolicitudDetail(${s.id})">Ver</button>
+                <button class="btn btn-outline-primary" onclick="openSolicitudEdit(${s.id})">Editar</button>
                 <button class="btn btn-outline-danger" onclick="deleteSolicitud(${s.id})">Eliminar</button>
               </div>
             `;
@@ -163,7 +182,7 @@
         }
       }
 
-      // Muestra todos los campos que devuelve la API para una donación
+      // Muestra detalle de donación (reutilizable)
       async function openDonacionDetail(id){
         try{
           const resp = await fetch(`/donaciones/api/donaciones/${id}/`, { credentials: 'same-origin' });
@@ -222,7 +241,49 @@
         }
       }
 
-      // ABRIR MODAL EDITAR (construye formulario dinámico según JSON de la API)
+      // detalle solicitud (reutiliza mismo modal)
+      async function openSolicitudDetail(id){
+        try{
+          const resp = await fetch(`/solicitudes/api/solicitudes/${id}/`, { credentials: 'same-origin' });
+          if(!resp.ok) throw resp;
+          const s = await resp.json();
+          const body = document.getElementById('detailModalBody');
+          let html = `<h5>${escapeHtml(s.titulo ?? s.tipo ?? `Solicitud #${s.id ?? ''}`)}</h5>`;
+
+          // mostrar campos relevantes
+          if(s.estado){
+            const estadoInfo = badgeClassForEstado(s.estado);
+            html += `<p><strong>Estado:</strong> <span class="badge ${estadoInfo.cls}">${escapeHtml(estadoInfo.text)}</span></p>`;
+          }
+
+          html += '<dl class="row detail-dl">';
+          const skip = new Set(['id','titulo','tipo','descripcion']);
+          for(const [k, v] of Object.entries(s)){
+            if(skip.has(k)) continue;
+            if(v === null || v === undefined || v === '') continue;
+
+            const label = k.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+            if(typeof v === 'object'){
+              html += `<dt class="col-sm-4">${escapeHtml(label)}</dt><dd class="col-sm-8"><pre class="mb-0">${escapeHtml(JSON.stringify(v, null, 2))}</pre></dd>`;
+              continue;
+            }
+            html += `<dt class="col-sm-4">${escapeHtml(label)}</dt><dd class="col-sm-8">${escapeHtml(String(v))}</dd>`;
+          }
+          html += '</dl>';
+
+          if(s.detalle){
+            html += `<hr><div><strong>Detalle</strong><p>${escapeHtml(s.detalle).replace(/\n/g,'<br>')}</p></div>`;
+          }
+
+          body.innerHTML = html;
+          new bootstrap.Modal(document.getElementById('detailModal')).show();
+        }catch(e){
+          console.error('Error detalle solicitud', e);
+          alert('No se pudo cargar detalle de solicitud.');
+        }
+      }
+
+      // EDIT donaciones (existing)
       let currentEditId = null;
       async function openDonacionEdit(id){
         try{
@@ -233,7 +294,6 @@
           const body = document.getElementById('editModalBody');
           body.innerHTML = '';
 
-          // quitar: id, created/updated y campos indeseados (categoria, imagen, fecha_publicacion, donante, estado)
           const skip = new Set(['id','created_at','updated_at','categoria','imagen','fecha_publicacion','donante','estado']);
           for(const [k, v] of Object.entries(d)){
             if(skip.has(k)) continue;
@@ -248,7 +308,6 @@
             lab.textContent = label;
             row.appendChild(lab);
 
-            // otros tipos -> decidir input
             let input;
             if(typeof v === 'boolean'){
               input = document.createElement('input');
@@ -292,7 +351,6 @@
         }
       }
 
-      // ENVIAR PATCH al API con cambios
       async function submitDonacionEdit(ev){
         ev.preventDefault();
         if(currentEditId === null) return;
@@ -313,8 +371,6 @@
           payload[inp.name] = inp.value;
         });
 
-        console.log('Payload a enviar:', payload);
-
         try{
           const resp = await fetch(`/donaciones/api/donaciones/${currentEditId}/`, {
             method: 'PATCH',
@@ -329,18 +385,12 @@
 
           if(!resp.ok){
             let errText = '';
-            try {
-              const errJson = await resp.json();
-              errText = JSON.stringify(errJson);
-            } catch(e){
-              errText = await resp.text();
-            }
+            try { const errJson = await resp.json(); errText = JSON.stringify(errJson); } catch(e){ errText = await resp.text(); }
             console.error('Error en actualización:', resp.status, errText);
             alert('Error guardando: ' + (errText || resp.status));
             return;
           }
 
-          // éxito: cerrar modal y recargar lista
           const editModalEl = document.getElementById('editModal');
           bootstrap.Modal.getInstance(editModalEl).hide();
           currentEditId = null;
@@ -351,7 +401,6 @@
         }
       }
 
-      // ELIMINAR donación
       async function deleteDonacion(id){
         if(!confirm('Eliminar donación #' + id + ' ?')) return;
         try{
@@ -373,22 +422,121 @@
         }
       }
 
-      async function openSolicitudDetail(id){
+      // SOLICITUDES: editar + eliminar
+      let currentSolicitudEditId = null;
+      async function openSolicitudEdit(id){
         try{
           const resp = await fetch(`/solicitudes/api/solicitudes/${id}/`, { credentials: 'same-origin' });
           if(!resp.ok) throw resp;
           const s = await resp.json();
-          const body = document.getElementById('detailModalBody');
-          body.innerHTML = `
-            <h5>${escapeHtml(s.titulo ?? s.tipo)}</h5>
-            <p><strong>Detalle:</strong><br>${s.detalle ? escapeHtml(s.detalle).replace(/\n/g,'<br>') : '—'}</p>
-            <p><strong>Cantidad:</strong> ${escapeHtml(String(s.cantidad ?? '—'))}</p>
-            <p><strong>Aprobada:</strong> ${s.aprobada ? 'Sí' : 'No'}</p>
-          `;
-          new bootstrap.Modal(document.getElementById('detailModal')).show();
+          currentSolicitudEditId = id;
+          const body = document.getElementById('editSolicitudModalBody');
+          body.innerHTML = '';
+
+          // campos que no queremos editar desde el modal
+          const skip = new Set(['id','fecha_solicitud','created_at','updated_at','solicitante','transaccion']);
+          for(const [k, rawV] of Object.entries(s)){
+            if(skip.has(k)) continue;
+            let v = rawV;
+            const label = k.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+            const row = document.createElement('div');
+            row.className = 'form-row';
+            const lab = document.createElement('label');
+            lab.className = 'field-label';
+            lab.htmlFor = 'sol-field-'+k;
+            lab.textContent = label;
+            row.appendChild(lab);
+
+            let input;
+            // booleans (ej. aprobada)
+            if(typeof v === 'boolean' || k === 'aprobada'){
+              input = document.createElement('input');
+              input.type = 'checkbox';
+              input.id = 'sol-field-'+k;
+              input.checked = !!v;
+            } else if(typeof v === 'number' || k === 'cantidad'){
+              input = document.createElement('input');
+              input.type = 'number';
+              input.id = 'sol-field-'+k;
+              input.value = v ?? '';
+              input.className = 'form-control';
+            } else if(k === 'detalle' || k === 'mensaje' || (typeof v === 'string' && String(v).length > 120)){
+              input = document.createElement('textarea');
+              input.id = 'sol-field-'+k;
+              input.className = 'form-control';
+              input.rows = 4;
+              input.value = v ?? '';
+            } else {
+              input = document.createElement('input');
+              input.type = 'text';
+              input.id = 'sol-field-'+k;
+              input.className = 'form-control';
+              input.value = v ?? '';
+            }
+
+            input.name = k;
+            row.appendChild(input);
+            body.appendChild(row);
+          }
+
+          const editModalEl = document.getElementById('editSolicitudModal');
+          new bootstrap.Modal(editModalEl).show();
+
+          const form = document.getElementById('editSolicitudForm');
+          form.onsubmit = submitSolicitudEdit;
         }catch(e){
-          console.error('Error detalle solicitud', e);
-          alert('No se pudo cargar detalle de solicitud.');
+          console.error('Error al abrir editar solicitud', e);
+          alert('No se pudo cargar solicitud para editar.');
+        }
+      }
+
+      async function submitSolicitudEdit(ev){
+        ev.preventDefault();
+        if(currentSolicitudEditId === null) return;
+
+        const bodyEl = document.getElementById('editSolicitudModalBody');
+        const inputs = bodyEl.querySelectorAll('[name]');
+        const payload = {};
+        inputs.forEach(inp => {
+          if(inp.type === 'checkbox'){
+            payload[inp.name] = inp.checked;
+            return;
+          }
+          if(inp.type === 'number'){
+            const val = inp.value;
+            payload[inp.name] = val === '' ? null : (val.includes('.') ? parseFloat(val) : parseInt(val,10));
+            return;
+          }
+          payload[inp.name] = inp.value;
+        });
+
+        try{
+          const resp = await fetch(`/solicitudes/api/solicitudes/${currentSolicitudEditId}/`, {
+            method: 'PATCH',
+            credentials: 'same-origin',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrftoken,
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify(payload)
+          });
+
+          if(!resp.ok){
+            let errText = '';
+            try { const errJson = await resp.json(); errText = JSON.stringify(errJson); } catch(e){ errText = await resp.text(); }
+            console.error('Error en actualización solicitud:', resp.status, errText);
+            alert('Error guardando solicitud: ' + (errText || resp.status));
+            return;
+          }
+
+          const editModalEl = document.getElementById('editSolicitudModal');
+          bootstrap.Modal.getInstance(editModalEl).hide();
+          currentSolicitudEditId = null;
+          await loadSolicitudes();
+        }catch(err){
+          console.error('Error guardando solicitud', err);
+          alert('No se pudo guardar cambios. Revisa la consola.');
         }
       }
 
@@ -400,7 +548,7 @@
             credentials: 'same-origin',
             headers: { 'X-CSRFToken': csrftoken }
           });
-          if(resp.status === 204){
+          if(resp.status === 204 || resp.ok){
             await loadSolicitudes();
           } else {
             console.error('Error al eliminar', resp.status);
@@ -423,27 +571,9 @@
           .replace(/'/g, '&#039;');
       }
 
-      async function cargarDependiente(){
-        try{
-          const allResp = await fetch('/donaciones/api/donaciones/', { credentials: 'same-origin' });
-          if(!allResp.ok) return;
-          const all = await allResp.json();
-          const tipos = Array.from(new Set(all.map(d => d.tipo).filter(Boolean)));
-          if(!tipos.length) return;
-          const tipo = tipos[0];
-          const resp = await fetch(`/donaciones/api/donaciones/?tipo=${encodeURIComponent(tipo)}`, { credentials: 'same-origin' });
-          if(!resp.ok) return;
-          const donaciones = await resp.json();
-          console.log('Dependiente:', tipo, donaciones);
-        }catch(e){
-          console.error('Dependiente error', e);
-        }
-      }
-
       document.addEventListener('DOMContentLoaded', () => {
         loadDonaciones();
         loadSolicitudes();
-        cargarDependiente();
       });
     </script>
   </body>
