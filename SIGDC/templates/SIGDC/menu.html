@@ -235,11 +235,45 @@
         const donaciones = await resp.json();
         console.log('Tipos encontrados', tipos);
         console.log('Donaciones para', tipo, donaciones);
-        // actualizar DOM según tu diseño
+        // actualizar el DOM 
       } catch (e) {
         console.error('Error peticion dependiente', e);
       }
     }
+
+      // eliminar (async/await)
+      async function eliminarSolicitud(id) {
+      try {
+        const resp = await fetch(`/solicitudes/api/solicitudes/${id}/`, {
+          method: 'DELETE',
+          headers: { 'X-CSRFToken': csrftoken }
+        });
+        if (resp.status === 204) {
+          console.log('Eliminada', id);
+          // actualizar el DOM
+      } else {
+        console.error('Error al eliminar', resp.status);
+      }
+      } catch (e) {
+      console.error('Network error', e);
+      } 
+    }
+
+      // actualizar (PUT)
+      async function actualizarSolicitud(id, payload) {
+        try {
+          const resp = await fetch(`/solicitudes/api/solicitudes/${id}/`, {
+            method: 'PUT',
+            headers: { 'Content-Type':'application/json', 'X-CSRFToken': csrftoken },
+            body: JSON.stringify(payload)
+          });
+          if (!resp.ok) throw resp;
+          const updated = await resp.json();
+          console.log('Actualizada', updated);
+        } catch (e) {
+          console.error('Error actualizar', e);
+        }
+      }
 
         // Llamar al cargar la página para demo
         document.addEventListener('DOMContentLoaded', cargarDonacionesPorPrimerTipo);

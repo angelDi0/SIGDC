@@ -3,10 +3,6 @@ from .models import Solicitud
 from .serializers import SolicitudSerializer
 
 class SolicitudViewSet(viewsets.ModelViewSet):
-    """
-    API REST para el modelo Solicitud.
-    Permite CRUD (leer para todos, mutaciones solo para usuarios autenticados).
-    """
     queryset = Solicitud.objects.select_related('solicitante', 'donacion').all()
     serializer_class = SolicitudSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
