@@ -425,70 +425,64 @@
       // SOLICITUDES: editar + eliminar
       let currentSolicitudEditId = null;
       async function openSolicitudEdit(id){
-        try{
-          const resp = await fetch(`/solicitudes/api/solicitudes/${id}/`, { credentials: 'same-origin' });
-          if(!resp.ok) throw resp;
-          const s = await resp.json();
-          currentSolicitudEditId = id;
-          const body = document.getElementById('editSolicitudModalBody');
-          body.innerHTML = '';
+      try{
+        const resp = await fetch(`/solicitudes/api/solicitudes/${id}/`, { credentials: 'same-origin' });
+        if(!resp.ok) throw resp;
+        const s = await resp.json();
+        currentSolicitudEditId = id;
+        const body = document.getElementById('editSolicitudModalBody');
+        body.innerHTML = '';
 
-          // campos que no queremos editar desde el modal
-          const skip = new Set(['id','fecha_solicitud','created_at','updated_at','solicitante','transaccion']);
-          for(const [k, rawV] of Object.entries(s)){
-            if(skip.has(k)) continue;
-            let v = rawV;
-            const label = k.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
-            const row = document.createElement('div');
-            row.className = 'form-row';
-            const lab = document.createElement('label');
-            lab.className = 'field-label';
-            lab.htmlFor = 'sol-field-'+k;
-            lab.textContent = label;
-            row.appendChild(lab);
+        // Mostrar únicamente estos campos (evita donacion, mensaje, etc.)
+        const allowed = ['titulo', 'detalle', 'tipo', 'cantidad'];
+        allowed.forEach(k => {
+          if (!(k in s)) return;
+          const v = s[k];
+          const label = k.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
 
-            let input;
-            // booleans (ej. aprobada)
-            if(typeof v === 'boolean' || k === 'aprobada'){
-              input = document.createElement('input');
-              input.type = 'checkbox';
-              input.id = 'sol-field-'+k;
-              input.checked = !!v;
-            } else if(typeof v === 'number' || k === 'cantidad'){
-              input = document.createElement('input');
-              input.type = 'number';
-              input.id = 'sol-field-'+k;
-              input.value = v ?? '';
-              input.className = 'form-control';
-            } else if(k === 'detalle' || k === 'mensaje' || (typeof v === 'string' && String(v).length > 120)){
-              input = document.createElement('textarea');
-              input.id = 'sol-field-'+k;
-              input.className = 'form-control';
-              input.rows = 4;
-              input.value = v ?? '';
-            } else {
-              input = document.createElement('input');
-              input.type = 'text';
-              input.id = 'sol-field-'+k;
-              input.className = 'form-control';
-              input.value = v ?? '';
-            }
+          const row = document.createElement('div');
+          row.className = 'form-row';
 
-            input.name = k;
-            row.appendChild(input);
-            body.appendChild(row);
+          const lab = document.createElement('label');
+          lab.className = 'field-label';
+          lab.htmlFor = 'sol-field-' + k;
+          lab.textContent = label;
+          row.appendChild(lab);
+
+          let input;
+          if (k === 'detalle') {
+            input = document.createElement('textarea');
+            input.rows = 4;
+            input.className = 'form-control';
+            input.value = v ?? '';
+          } else if (k === 'cantidad') {
+            input = document.createElement('input');
+            input.type = 'number';
+            input.className = 'form-control';
+            input.value = (v === null || v === undefined) ? '' : v;
+          } else {
+            input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'form-control';
+            input.value = v ?? '';
           }
 
-          const editModalEl = document.getElementById('editSolicitudModal');
-          new bootstrap.Modal(editModalEl).show();
+          input.id = 'sol-field-' + k;
+          input.name = k;
+          row.appendChild(input);
+          body.appendChild(row);
+        });
 
-          const form = document.getElementById('editSolicitudForm');
-          form.onsubmit = submitSolicitudEdit;
-        }catch(e){
-          console.error('Error al abrir editar solicitud', e);
-          alert('No se pudo cargar solicitud para editar.');
-        }
+        const editModalEl = document.getElementById('editSolicitudModal');
+        new bootstrap.Modal(editModalEl).show();
+
+        const form = document.getElementById('editSolicitudForm');
+        form.onsubmit = submitSolicitudEdit;
+      }catch(e){
+        console.error('Error al abrir editar solicitud', e);
+        alert('No se pudo cargar solicitud para editar.');
       }
+    }
 
       async function submitSolicitudEdit(ev){
         ev.preventDefault();
