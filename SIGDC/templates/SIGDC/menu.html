@@ -283,7 +283,7 @@
         }
       }
 
-      // EDIT donaciones (existing)
+      // EDIT donaciones 
       let currentEditId = null;
       async function openDonacionEdit(id){
         try{
@@ -433,7 +433,7 @@
         const body = document.getElementById('editSolicitudModalBody');
         body.innerHTML = '';
 
-        // Mostrar únicamente estos campos (evita donacion, mensaje, etc.)
+        // Mostrar estos campos 
         const allowed = ['titulo', 'detalle', 'tipo', 'cantidad'];
         allowed.forEach(k => {
           if (!(k in s)) return;
@@ -554,7 +554,6 @@
         }
       }
 
-      // utilidad para escapar texto antes de inyectar en HTML
       function escapeHtml(str){
         if(str === null || str === undefined) return '';
         return String(str)

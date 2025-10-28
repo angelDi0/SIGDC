@@ -27,7 +27,6 @@ class DonacionSerializer(serializers.ModelSerializer):
         perfil = getattr(request.user, 'perfil', None)
 
         if perfil is None:
-            # Intentar get_or_create usando el usuario y un email basado en el User
             email = getattr(request.user, 'email', None) or f'{request.user.username}@noemail.local'
             try:
                 perfil, created = Perfil.objects.get_or_create(
