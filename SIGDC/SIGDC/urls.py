@@ -18,6 +18,8 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.authtoken import views as drf_authtoken_views
 
+"registra las rutas de la API y el endpoint de autenticación por token"
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),  # login/logout browsable

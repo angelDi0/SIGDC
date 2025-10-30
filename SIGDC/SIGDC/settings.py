@@ -34,7 +34,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'donaciones',
-    'usuarios',
+    'usuarios.apps.UsuariosConfig',
     'solicitudes',
     'django.contrib.admin',
     'django.contrib.auth',

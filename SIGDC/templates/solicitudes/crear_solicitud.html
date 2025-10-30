@@ -69,12 +69,17 @@
 
   <script>
   (function(){
-    function getCookie(name){ const v=document.cookie.match('(^|;)\\s*'+name+'\\s*=\\s*([^;]+)'); return v? v.pop():''; }
+    // función para obtener el token CSRF
+    function getCookie(name){
+      const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+      return v ? v.pop() : '';
+    }
     const csrftoken = getCookie('csrftoken');
 
     const confirmModalEl = document.getElementById('confirmModal');
     const confirmModal = new bootstrap.Modal(confirmModalEl);
 
+    // muestra el modal de confirmación con los datos
     document.getElementById('btn-submit').addEventListener('click', function(){
       document.getElementById('confirm-titulo').textContent = document.getElementById('titulo').value || '—';
       document.getElementById('confirm-detalle').textContent = document.getElementById('detalle').value || '—';
@@ -84,8 +89,10 @@
       confirmModal.show();
     });
 
-    document.getElementById('confirm-ok').addEventListener('click', async function(){
+    
+    document.getElementById('confirm-ok').addEventListener('click', function(){
       document.getElementById('result').textContent = '';
+
       const data = {
         titulo: document.getElementById('titulo').value || '',
         detalle: document.getElementById('detalle').value || '',
@@ -93,35 +100,40 @@
         tipo: document.getElementById('tipo').value || ''
       };
 
-      try {
-        const resp = await fetch('/solicitudes/api/solicitudes/', {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: {
-            'Content-Type':'application/json',
-            'X-CSRFToken': csrftoken,
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify(data)
-        });
-
-        const text = await resp.text();
-        let payload;
-        try { payload = text ? JSON.parse(text) : null; } catch { payload = text; }
-
+      fetch('/solicitudes/api/solicitudes/', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrftoken,
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+      //Revisa si la respuesta fue correcta
+      .then(resp => {
         if (!resp.ok) {
-          document.getElementById('result').textContent = (payload && typeof payload === 'object') ? JSON.stringify(payload) : String(payload || resp.status);
-          confirmModal.hide();
-          return;
+          return resp.text().then(text => {
+            throw new Error(text || 'Error HTTP ' + resp.status);
+          });
         }
-
-        // éxito: redirigir al menú y recargar automáticamente
+        return resp.json(); // si fue correcta, parsea el JSON
+      })
+      // Muestra el resultado y redirige
+      .then(payload => {
+        console.log('Solicitud creada:', payload);
         window.location.replace('/usuarios/menu/');
-      } catch (err) {
-        console.error(err);
-        document.getElementById('result').textContent = 'Error al crear solicitud';
+      })
+      
+      .catch(err => {
+        console.error('Error:', err);
+        const msg = err.message.includes('Authentication')
+          ? 'No estás autenticado. Inicia sesión.'
+          : 'Error al crear solicitud.';
+
+        document.getElementById('result').textContent = msg;
         confirmModal.hide();
-      }
+      });
     });
   })();
   </script>
