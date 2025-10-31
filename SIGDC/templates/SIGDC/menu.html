@@ -182,66 +182,7 @@
         }
       }
 
-      // Muestra detalle de donación (reutilizable)
-      async function openDonacionDetail(id){
-        try{
-          const resp = await fetch(`/donaciones/api/donaciones/${id}/`, { credentials: 'same-origin' });
-          if(!resp.ok) throw resp;
-          const d = await resp.json();
-          const body = document.getElementById('detailModalBody');
-
-          const title = escapeHtml(d.titulo ?? d.tipo ?? `Donación #${d.id ?? ''}`);
-          let html = `<h5>${title}</h5>`;
-
-          if(d.estado){
-            const estadoInfo = badgeClassForEstado(d.estado);
-            html += `<p><strong>Estado:</strong> <span class="badge ${estadoInfo.cls}">${escapeHtml(estadoInfo.text)}</span></p>`;
-          }
-
-          html += '<dl class="row detail-dl">';
-          const skip = new Set(['id','titulo','tipo','estado','descripcion']);
-          for(const [k, v] of Object.entries(d)){
-            if(skip.has(k)) continue;
-            if(v === null || v === undefined || v === '') continue;
-
-            const label = k.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
-
-            if(/imagen|foto|file|url/i.test(k) && (typeof v === 'string') && (v.startsWith('http') || v.startsWith('/'))){
-              html += `<dt class="col-sm-4">${escapeHtml(label)}</dt><dd class="col-sm-8"><img src="${escapeHtml(v)}" class="detail-img" alt="${escapeHtml(label)}"></dd>`;
-              continue;
-            }
-
-            if(typeof v === 'object'){
-              if(v && (v.nombre || v.nombre_completo || v.email || v.id)){
-                const parts = [];
-                if(v.nombre) parts.push(escapeHtml(v.nombre));
-                if(v.nombre_completo) parts.push(escapeHtml(v.nombre_completo));
-                if(v.email) parts.push(`<small class="text-muted">${escapeHtml(v.email)}</small>`);
-                if(v.id) parts.push(`(id:${escapeHtml(String(v.id))})`);
-                html += `<dt class="col-sm-4">${escapeHtml(label)}</dt><dd class="col-sm-8">${parts.join(' ')}</dd>`;
-              } else {
-                html += `<dt class="col-sm-4">${escapeHtml(label)}</dt><dd class="col-sm-8"><pre class="mb-0">${escapeHtml(JSON.stringify(v, null, 2))}</pre></dd>`;
-              }
-              continue;
-            }
-
-            html += `<dt class="col-sm-4">${escapeHtml(label)}</dt><dd class="col-sm-8">${escapeHtml(String(v))}</dd>`;
-          }
-          html += '</dl>';
-
-          if(d.descripcion){
-            html += `<hr><div><strong>Descripción</strong><p>${escapeHtml(d.descripcion).replace(/\n/g,'<br>')}</p></div>`;
-          }
-
-          body.innerHTML = html;
-          new bootstrap.Modal(document.getElementById('detailModal')).show();
-        }catch(e){
-          console.error('Error detalle donación', e);
-          alert('No se pudo cargar detalle de donación.');
-        }
-      }
-
-      // detalle solicitud (reutiliza mismo modal)
+      // detalle solicitud (muestra datos del solicitante formateados)
       async function openSolicitudDetail(id){
         try{
           const resp = await fetch(`/solicitudes/api/solicitudes/${id}/`, { credentials: 'same-origin' });
@@ -250,18 +191,34 @@
           const body = document.getElementById('detailModalBody');
           let html = `<h5>${escapeHtml(s.titulo ?? s.tipo ?? `Solicitud #${s.id ?? ''}`)}</h5>`;
 
-          // mostrar campos relevantes
           if(s.estado){
             const estadoInfo = badgeClassForEstado(s.estado);
             html += `<p><strong>Estado:</strong> <span class="badge ${estadoInfo.cls}">${escapeHtml(estadoInfo.text)}</span></p>`;
           }
 
-          html += '<dl class="row detail-dl">';
-          const skip = new Set(['id','titulo','tipo','descripcion']);
+          // Mostrar datos del solicitante (creador) si vienen en la respuesta
+          if(s.solicitante){
+            const p = s.solicitante;
+            html += `<hr><div><strong>Solicitante (creador)</strong>
+              <dl class="row mb-0">
+                <dt class="col-sm-4">ID</dt><dd class="col-sm-8">${escapeHtml(String(p.id ?? ''))}</dd>
+                <dt class="col-sm-4">Usuario</dt><dd class="col-sm-8">${escapeHtml(p.usuario ?? p.usuario_completo ?? '')}</dd>
+                <dt class="col-sm-4">Email</dt><dd class="col-sm-8">${escapeHtml(p.email ?? '')}</dd>
+                <dt class="col-sm-4">Teléfono</dt><dd class="col-sm-8">${escapeHtml(p.telefono ?? '')}</dd>
+                <dt class="col-sm-4">Dirección</dt><dd class="col-sm-8">${escapeHtml(p.direccion ?? '')}</dd>
+                <dt class="col-sm-4">Ciudad / País</dt><dd class="col-sm-8">${escapeHtml(((p.ciudad ?? '') + (p.pais ? ' / ' + p.pais : '')))}</dd>
+                <dt class="col-sm-4">Rol</dt><dd class="col-sm-8">${escapeHtml(p.rol ?? '')}</dd>
+                <dt class="col-sm-4">Activo</dt><dd class="col-sm-8">${p.activo ? 'Sí' : 'No'}</dd>
+              </dl>
+            </div>`;
+          }
+
+          // Mostrar resto de campos de la solicitud (omitimos solicitante)
+          html += '<hr><dl class="row detail-dl">';
+          const skip = new Set(['id','titulo','tipo','descripcion','solicitante']);
           for(const [k, v] of Object.entries(s)){
             if(skip.has(k)) continue;
             if(v === null || v === undefined || v === '') continue;
-
             const label = k.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
             if(typeof v === 'object'){
               html += `<dt class="col-sm-4">${escapeHtml(label)}</dt><dd class="col-sm-8"><pre class="mb-0">${escapeHtml(JSON.stringify(v, null, 2))}</pre></dd>`;
@@ -424,65 +381,59 @@
 
       // SOLICITUDES: editar + eliminar
       let currentSolicitudEditId = null;
-      async function openSolicitudEdit(id){
-      try{
-        const resp = await fetch(`/solicitudes/api/solicitudes/${id}/`, { credentials: 'same-origin' });
-        if(!resp.ok) throw resp;
-        const s = await resp.json();
-        currentSolicitudEditId = id;
-        const body = document.getElementById('editSolicitudModalBody');
-        body.innerHTML = '';
+      async function openSolicitudDetail(id){
+        try{
+          const resp = await fetch(`/solicitudes/api/solicitudes/${id}/`, { credentials: 'same-origin' });
+          if(!resp.ok) throw resp;
+          const s = await resp.json();
+          const body = document.getElementById('detailModalBody');
+          let html = `<h5>${escapeHtml(s.titulo ?? s.tipo ?? `Solicitud #${s.id ?? ''}`)}</h5>`;
 
-        // Mostrar estos campos 
-        const allowed = ['titulo', 'detalle', 'tipo', 'cantidad'];
-        allowed.forEach(k => {
-          if (!(k in s)) return;
-          const v = s[k];
-          const label = k.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
-
-          const row = document.createElement('div');
-          row.className = 'form-row';
-
-          const lab = document.createElement('label');
-          lab.className = 'field-label';
-          lab.htmlFor = 'sol-field-' + k;
-          lab.textContent = label;
-          row.appendChild(lab);
-
-          let input;
-          if (k === 'detalle') {
-            input = document.createElement('textarea');
-            input.rows = 4;
-            input.className = 'form-control';
-            input.value = v ?? '';
-          } else if (k === 'cantidad') {
-            input = document.createElement('input');
-            input.type = 'number';
-            input.className = 'form-control';
-            input.value = (v === null || v === undefined) ? '' : v;
-          } else {
-            input = document.createElement('input');
-            input.type = 'text';
-            input.className = 'form-control';
-            input.value = v ?? '';
+          if(s.estado){
+            const estadoInfo = badgeClassForEstado(s.estado);
+            html += `<p><strong>Estado:</strong> <span class="badge ${estadoInfo.cls}">${escapeHtml(estadoInfo.text)}</span></p>`;
           }
 
-          input.id = 'sol-field-' + k;
-          input.name = k;
-          row.appendChild(input);
-          body.appendChild(row);
-        });
+          // Mostrar datos del solicitante (creador)
+          if(s.solicitante){
+            const p = s.solicitante;
+            html += `<hr><div><strong>Solicitante (creador)</strong>
+              <dl class="row mb-0">
+                <dt class="col-sm-4">ID</dt><dd class="col-sm-8">${escapeHtml(String(p.id ?? ''))}</dd>
+                <dt class="col-sm-4">Usuario</dt><dd class="col-sm-8">${escapeHtml(p.usuario ?? p.usuario_completo ?? '')}</dd>
+                <dt class="col-sm-4">Email</dt><dd class="col-sm-8">${escapeHtml(p.email ?? '')}</dd>
+                <dt class="col-sm-4">Rol</dt><dd class="col-sm-8">${escapeHtml(p.rol ?? '')}</dd>
+                <dt class="col-sm-4">Activo</dt><dd class="col-sm-8">${p.activo ? 'Sí' : 'No'}</dd>
+              </dl>
+            </div>`;
+          }
 
-        const editModalEl = document.getElementById('editSolicitudModal');
-        new bootstrap.Modal(editModalEl).show();
+          // Mostrar resto de campos de la solicitud (omitimos solicitante)
+          html += '<hr><dl class="row detail-dl">';
+          const skip = new Set(['id','titulo','tipo','descripcion','solicitante']);
+          for(const [k, v] of Object.entries(s)){
+            if(skip.has(k)) continue;
+            if(v === null || v === undefined || v === '') continue;
+            const label = k.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+            if(typeof v === 'object'){
+              html += `<dt class="col-sm-4">${escapeHtml(label)}</dt><dd class="col-sm-8"><pre class="mb-0">${escapeHtml(JSON.stringify(v, null, 2))}</pre></dd>`;
+              continue;
+            }
+            html += `<dt class="col-sm-4">${escapeHtml(label)}</dt><dd class="col-sm-8">${escapeHtml(String(v))}</dd>`;
+          }
+          html += '</dl>';
 
-        const form = document.getElementById('editSolicitudForm');
-        form.onsubmit = submitSolicitudEdit;
-      }catch(e){
-        console.error('Error al abrir editar solicitud', e);
-        alert('No se pudo cargar solicitud para editar.');
+          if(s.detalle){
+            html += `<hr><div><strong>Detalle</strong><p>${escapeHtml(s.detalle).replace(/\n/g,'<br>')}</p></div>`;
+          }
+
+          body.innerHTML = html;
+          new bootstrap.Modal(document.getElementById('detailModal')).show();
+        }catch(e){
+          console.error('Error detalle solicitud', e);
+          alert('No se pudo cargar detalle de solicitud.');
+        }
       }
-    }
 
       async function submitSolicitudEdit(ev){
         ev.preventDefault();
