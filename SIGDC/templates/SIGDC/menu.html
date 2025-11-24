@@ -111,8 +111,11 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-      function getCookie(name){ const v=document.cookie.match('(^|;)\\s*'+name+'\\s*=\\s*([^;]+)'); return v? v.pop():''; }
-      const csrftoken = getCookie('csrftoken');
+  function getCookie(name){ const v=document.cookie.match('(^|;)\\s*'+name+'\\s*=\\s*([^;]+)'); return v? v.pop():''; }
+  const csrftoken = getCookie('csrftoken');
+  // Usuario actual y rol desde plantilla (servidor)
+  const CURRENT_USER = '{{ request.user.username|default:""|escapejs }}';
+  const IS_STAFF = {{ request.user.is_staff|yesno:"true,false" }};
 
       function badgeClassForEstado(estado){
         if(!estado) return { cls: 'bg-secondary', text: 'Sin estado' };
@@ -148,12 +151,12 @@
                 <div><strong>${escapeHtml(d.titulo ?? d.tipo ?? 'Sin título')}</strong></div>
                 <div class="small text-muted">${escapeHtml(d.descripcion ? d.descripcion.substring(0,80) : '')}</div>
               </div>
-              <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center">
                 <span class="badge ${estadoInfo.cls}">${escapeHtml(estadoInfo.text)}</span>
                 <div class="btn-group btn-group-sm ms-2">
                   <button class="btn btn-outline-secondary" onclick="openDonacionDetail(${d.id})">Ver</button>
-                  <button class="btn btn-outline-primary" onclick="openDonacionEdit(${d.id})">Editar</button>
-                  <button class="btn btn-outline-danger" onclick="deleteDonacion(${d.id})">Eliminar</button>
+                  ${ (IS_STAFF || (d.donante && d.donante.usuario === CURRENT_USER)) ? `<button class="btn btn-outline-primary" onclick="openDonacionEdit(${d.id})">Editar</button>` : '' }
+                  ${ (IS_STAFF || (d.donante && d.donante.usuario === CURRENT_USER)) ? `<button class="btn btn-outline-danger" onclick="deleteDonacion(${d.id})">Eliminar</button>` : '' }
                 </div>
               </div>
             `;
@@ -186,8 +189,8 @@
               </div>
               <div class="btn-group btn-group-sm">
                 <button class="btn btn-outline-secondary" onclick="openSolicitudDetail(${s.id})">Ver</button>
-                <button class="btn btn-outline-primary" onclick="openSolicitudEdit(${s.id})">Editar</button>
-                <button class="btn btn-outline-danger" onclick="deleteSolicitud(${s.id})">Eliminar</button>
+                ${ (IS_STAFF || (s.solicitante && s.solicitante.usuario === CURRENT_USER)) ? `<button class="btn btn-outline-primary" onclick="openSolicitudEdit(${s.id})">Editar</button>` : '' }
+                ${ (IS_STAFF || (s.solicitante && s.solicitante.usuario === CURRENT_USER)) ? `<button class="btn btn-outline-danger" onclick="deleteSolicitud(${s.id})">Eliminar</button>` : '' }
               </div>
             `;
             container.appendChild(item);
@@ -253,6 +256,74 @@
         }catch(e){
           console.error('Error detalle solicitud', e);
           alert('No se pudo cargar detalle de solicitud.');
+        }
+      }
+
+      // abrir modal de edición para una solicitud
+      async function openSolicitudEdit(id){
+        try{
+          const resp = await fetch(`/solicitudes/api/solicitudes/${id}/`, { credentials: 'same-origin' });
+          if(!resp.ok) throw resp;
+          const s = await resp.json();
+          currentSolicitudEditId = id;
+          const body = document.getElementById('editSolicitudModalBody');
+          body.innerHTML = '';
+
+          // Mostrar solo los campos permitidos para edición (lista blanca)
+          const allowed = new Set(['titulo','detalle','cantidad','tipo']);
+          for(const [k, v] of Object.entries(s)){
+            if(!allowed.has(k)) continue;
+
+            const label = k.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+            const row = document.createElement('div');
+            row.className = 'form-row';
+
+            const lab = document.createElement('label');
+            lab.className = 'field-label';
+            lab.htmlFor = 'field-s-'+k;
+            lab.textContent = label;
+            row.appendChild(lab);
+
+            let input;
+            if(typeof v === 'boolean'){
+              input = document.createElement('input');
+              input.type = 'checkbox';
+              input.id = 'field-s-'+k;
+              input.checked = !!v;
+              input.dataset.fieldType = 'boolean';
+            } else if(typeof v === 'number'){
+              input = document.createElement('input');
+              input.type = 'number';
+              input.id = 'field-s-'+k;
+              input.value = v;
+              input.className = 'form-control';
+            } else if(k === 'detalle' || (typeof v === 'string' && v && v.length > 120)){
+              input = document.createElement('textarea');
+              input.id = 'field-s-'+k;
+              input.className = 'form-control';
+              input.rows = 4;
+              input.value = v ?? '';
+            } else {
+              input = document.createElement('input');
+              input.type = 'text';
+              input.id = 'field-s-'+k;
+              input.className = 'form-control';
+              input.value = v ?? '';
+            }
+
+            input.name = k;
+            row.appendChild(input);
+            body.appendChild(row);
+          }
+
+          const editModalEl = document.getElementById('editSolicitudModal');
+          new bootstrap.Modal(editModalEl).show();
+
+          const form = document.getElementById('editSolicitudForm');
+          form.onsubmit = submitSolicitudEdit;
+        }catch(e){
+          console.error('Error al abrir editar solicitud', e);
+          alert('No se pudo cargar la solicitud para editar.');
         }
       }
 

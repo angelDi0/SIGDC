@@ -133,6 +133,10 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# URLs de login/redirección para las vistas protegidas
+LOGIN_URL = '/usuarios/login/'
+LOGIN_REDIRECT_URL = '/usuarios/menu/'
+
 # Tipo de campo primary key por defecto
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
