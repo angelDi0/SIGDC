@@ -1,0 +1,26 @@
+<h2>Mis solicitudes</h2>
+
+{% if object_list %}
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>Título</th>
+        <th>Fecha</th>
+        <th>Acciones</th>
+    </tr>
+
+    {% for s in object_list %}
+    <tr>
+        <td>{{ s.id }}</td>
+        <td>{{ s.titulo }}</td>
+        <td>{{ s.fecha_solicitud }}</td>
+        <td>
+            <a href="{% url 'solicitudes:detalle' s.id %}">Ver</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% else %}
+<p>No tienes solicitudes registradas.</p>
+{% endif %}

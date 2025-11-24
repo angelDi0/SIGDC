@@ -13,6 +13,10 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import get_object_or_404
 from donaciones.models import Donacion
 from solicitudes.models import Solicitud
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import ListView
+from solicitudes.models import Solicitud
+from solicitudes.utils import user_can_access_solicitud
 
 # ...existing code...
 
@@ -181,3 +185,12 @@ def admin_edit_user(request, user_id):
 
     # GET: mostrar formulario con datos actuales
     return render(request, 'usuarios/admin_edit.html', {'u': target})
+
+class MisSolicitudesView(LoginRequiredMixin, ListView):
+    template_name = "usuarios/mis_solicitudes.html"
+    model = Solicitud
+
+    def get_queryset(self):
+        return Solicitud.objects.filter(
+            solicitante__usuario=self.request.user.username
+        )

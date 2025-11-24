@@ -5,14 +5,16 @@ from django.contrib import messages
 from django.views.generic import UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin, PermissionRequiredMixin
 from django.urls import reverse_lazy
+from django.views.generic import ListView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from .models import Solicitud
 
 from .models import Solicitud
 from usuarios.models import Perfil
 
 
-# ===========================================================
-#       FUNCIÓN AUXILIAR: verificar propietario (owner)
-# ===========================================================
+
+# verificar propietario (owner)
 def _user_is_owner_of_solicitud(user, solicitud):
     solicitante = getattr(solicitud, 'solicitante', None)
     if not solicitante:
@@ -40,9 +42,9 @@ def _user_is_owner_of_solicitud(user, solicitud):
     return False
 
 
-# ===========================================================
-#                  VISTAS FBV (TUS ORIGINALES)
-# ===========================================================
+
+# VISTAS FBV 
+
 
 @login_required
 def crear_solicitud(request):
@@ -119,9 +121,7 @@ def eliminar_solicitud(request, pk):
     return render(request, 'solicitudes/confirm_delete.html', {'s': s})
 
 
-# ===========================================================
-#                  NUEVAS VISTAS CON MIXINS (CBV)
-# ===========================================================
+# VISTAS CON MIXINS (CBV)
 
 class SolicitudEditCBV(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     """
@@ -169,4 +169,13 @@ class SolicitudDeleteCBV(LoginRequiredMixin, PermissionRequiredMixin, DeleteView
             or user.is_superuser
             or user.has_perm(self.permission_required)
             or _user_is_owner_of_solicitud(user, obj)
+        )
+
+class MisSolicitudesView(LoginRequiredMixin, ListView):
+    template_name = "solicitudes/mis_solicitudes.html"
+    model = Solicitud
+
+    def get_queryset(self):
+        return Solicitud.objects.filter(
+            solicitante__usuario=self.request.user.username
         )

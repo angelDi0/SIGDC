@@ -1,0 +1,21 @@
+<h2>Solicitudes (vista desde Donaciones)</h2>
+
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>Título</th>
+        <th>Solicitante</th>
+        <th>Acción</th>
+    </tr>
+
+    {% for s in solicitudes %}
+    <tr>
+        <td>{{ s.id }}</td>
+        <td>{{ s.titulo }}</td>
+        <td>{{ s.solicitante.usuario }}</td>
+        <td>
+            <a href="{% url 'donaciones:ver_solicitud_desde_donaciones' s.id %}">Ver</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
