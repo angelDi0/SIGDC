@@ -6,3 +6,4 @@ pillow==11.3.0
 Pygments==2.19.2
 sqlparse==0.5.3
 tzdata==2025.2
+django-cors-headers

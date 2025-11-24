@@ -12,25 +12,26 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Construir rutas dentro del proyecto así: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+# Ajustes rápidos para desarrollo - no aptos para producción
+# Ver https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
+# ADVERTENCIA DE SEGURIDAD: guarda la clave secreta de producción en un lugar seguro
 SECRET_KEY = 'django-insecure-r$=-6n*!6ug5h8t9n3x-(ryq*%fn+%c$y4nap3qokj^ix09s_s'
 
-# SECURITY WARNING: don't run with debug turned on in production!
+# ADVERTENCIA DE SEGURIDAD: no ejecutes con DEBUG activado en producción
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
-# Application definition
+# Definición de la aplicación
 
 INSTALLED_APPS = [
+    'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
     'donaciones',
@@ -47,6 +48,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -84,7 +86,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'SIGDC.wsgi.application'
 
 
-# Database
+# Base de datos
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
@@ -95,7 +97,7 @@ DATABASES = {
 }
 
 
-# Password validation
+# Validación de contraseñas
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -114,7 +116,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Internationalization
+# Internacionalización
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
@@ -126,12 +128,50 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
+# Archivos estáticos (CSS, JavaScript, Imágenes)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
 
-# Default primary key field type
+# Tipo de campo primary key por defecto
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Configuración CORS (django-cors-headers)
+# Permitir que cookies/credenciales se envíen en peticiones cross-origin cuando esté configurado
+CORS_ALLOW_CREDENTIALS = True
+
+# NOTA: Ajusta los orígenes permitidos para tu despliegue. Para desarrollo puedes
+# permitir entradas localhost abajo. Evita CORS_ALLOW_ALL_ORIGINS = True en
+# producción salvo que entiendas las implicaciones de seguridad.
+CORS_ALLOWED_ORIGINS = [
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+]
+
+# Cabeceras Anti-XSS / protección contra clickjacking
+# Activar el filtro XSS del navegador y establecer opciones de frame en DENY
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'
+
+# Política de Host / Referrer y manejo opcional de proxy
+# Restringir hosts permitidos (valores por defecto para desarrollo). Ajustar para producción.
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+USE_X_FORWARDED_HOST = True
+
+# Opciones de endurecimiento opcionales sólo en producción (activar cuando DEBUG = False)
+if not DEBUG:
+    # Seguridad HSTS (Strict Transport Security)
+    SECURE_HSTS_SECONDS = 31536000  # 1 año
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+    # Asegurar que las cookies se envían únicamente sobre HTTPS
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+    # Reforzar cabeceras de seguridad en producción
+    SECURE_BROWSER_XSS_FILTER = True
+    X_FRAME_OPTIONS = 'DENY'
+
