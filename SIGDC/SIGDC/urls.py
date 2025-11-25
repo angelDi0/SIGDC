@@ -16,6 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.views.generic import RedirectView
 from rest_framework.authtoken import views as drf_authtoken_views
 
 "registra las rutas de la API y el endpoint de autenticación por token"
@@ -27,5 +28,8 @@ urlpatterns = [
     path('usuarios/', include('usuarios.urls')),
     path('donaciones/', include('donaciones.urls')),
     path('solicitudes/', include('solicitudes.urls')),
-    path('', include('usuarios.urls')),  
+    # Keep the `usuarios` app under /usuarios/ and redirect the site root to
+    # the users index instead of including the same urls twice (duplicate
+    # namespaces would otherwise be created).
+    path('', RedirectView.as_view(url='/usuarios/index/', permanent=False)),
 ]

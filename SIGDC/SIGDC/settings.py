@@ -10,7 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
+from django.core.exceptions import ImproperlyConfigured
 
 # Construir rutas dentro del proyecto así: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,13 +21,26 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Ajustes rápidos para desarrollo - no aptos para producción
 # Ver https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# ADVERTENCIA DE SEGURIDAD: guarda la clave secreta de producción en un lugar seguro
-SECRET_KEY = 'django-insecure-r$=-6n*!6ug5h8t9n3x-(ryq*%fn+%c$y4nap3qokj^ix09s_s'
+# Load secrets / runtime flags from environment to avoid leaking production values
+# In production set DJANGO_SECRET_KEY and DJANGO_DEBUG (or use a secrets manager)
+SECURE_HSTS_SECONDS = 31536000
+DEFAULT_INSECURE_SECRET = 'django-insecure-r$=-6n*!6ug5h8t9n3x-(ryq*%fn+%c$y4nap3qokj^ix09s_s'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', DEFAULT_INSECURE_SECRET)
 
-# ADVERTENCIA DE SEGURIDAD: no ejecutes con DEBUG activado en producción
-DEBUG = True
+# Aplicación de lista de verificación de seguridad para producción:
+#    export DJANGO_DEBUG=False
+#    export DJANGO_SECRET_KEY='<django-insecure-r$=-6n*!6ug5h8t9n3x-(ryq*%fn+%c$y4nap3qokj^ix09s_s>'
+#    export DJANGO_SECURE_HSTS_SECONDS=31536000
+#    export DJANGO_SECURE_SSL_REDIRECT=True
+#    export DJANGO_SESSION_COOKIE_SECURE=True
+#    export DJANGO_CSRF_COOKIE_SECURE=True
+#    export DJANGO_SECURE_HSTS_PRELOAD=True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+# DEBUG should be explicitly controlled by environment for deploys. Default to True
+# for local development but you should set DJANGO_DEBUG=False in production.
+DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
+
+ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 
 # Definición de la aplicación
@@ -164,18 +179,33 @@ X_FRAME_OPTIONS = 'DENY'
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 USE_X_FORWARDED_HOST = True
 
-# Opciones de endurecimiento opcionales sólo en producción (activar cuando DEBUG = False)
+# Security / hardening options. Provide values via environment variables in
+# production (or via a secrets manager). Many of these defaults are intentionally
+# permissive for local development but should be tightened for deployments.
+
+# HSTS: number of seconds clients should respect Strict-Transport-Security.
+# Set DJANGO_SECURE_HSTS_SECONDS to a positive integer (e.g. 31536000 for 1yr)
+SECURE_HSTS_SECONDS = int(os.getenv('DJANGO_SECURE_HSTS_SECONDS', '0'))
+if SECURE_HSTS_SECONDS > 0:
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv('DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS', 'True') == 'True'
+    SECURE_HSTS_PRELOAD = os.getenv('DJANGO_SECURE_HSTS_PRELOAD', 'False') == 'True'
+
+# Force HTTPS in production behind a reverse proxy/load-balancer if needed.
+SECURE_SSL_REDIRECT = os.getenv('DJANGO_SECURE_SSL_REDIRECT', 'False') == 'True'
+
+# Cookies should be secure (only sent over HTTPS) in production.
+SESSION_COOKIE_SECURE = os.getenv('DJANGO_SESSION_COOKIE_SECURE', str(not DEBUG)) == 'True'
+CSRF_COOKIE_SECURE = os.getenv('DJANGO_CSRF_COOKIE_SECURE', str(not DEBUG)) == 'True'
+
+# Re-enforce the existing headers if needed (kept enabled by default)
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'
+
+# Validate critical production requirements when DEBUG is disabled.
 if not DEBUG:
-    # Seguridad HSTS (Strict Transport Security)
-    SECURE_HSTS_SECONDS = 31536000  # 1 año
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-
-    # Asegurar que las cookies se envían únicamente sobre HTTPS
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-
-    # Reforzar cabeceras de seguridad en producción
-    SECURE_BROWSER_XSS_FILTER = True
-    X_FRAME_OPTIONS = 'DENY'
+    # Secret key must be properly set in production and must not be the default
+    if not SECRET_KEY or SECRET_KEY.startswith('django-insecure') or len(SECRET_KEY) < 50 or len(set(SECRET_KEY)) < 5:
+        raise ImproperlyConfigured(
+            'DJANGO_SECRET_KEY must be set to a long, random value for production.'
+        )
 
