@@ -1,0 +1,40 @@
+name: CI/CD Real Deploy SIGDC
+
+on:
+  push:
+    branches:
+      - kikin3
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+
+      - name: Checkout código
+        uses: actions/checkout@v3
+
+      - name: Activar entorno virtual
+        run: |
+          source /home/kikin/sites/SIGDC/SIGDC/env/bin/activate
+
+      - name: Instalar dependencias
+        run: |
+          source /home/kikin/sites/SIGDC/SIGDC/env/bin/activate
+          pip install --upgrade pip
+          pip install -r /home/kikin/sites/SIGDC/requirements.txt
+
+      - name: Migraciones
+        run: |
+          source /home/kikin/sites/SIGDC/SIGDC/env/bin/activate
+          python /home/kikin/sites/SIGDC/SIGDC/manage.py migrate --noinput
+
+      - name: Archivos estáticos
+        run: |
+          source /home/kikin/sites/SIGDC/SIGDC/env/bin/activate
+          python /home/kikin/sites/SIGDC/SIGDC/manage.py collectstatic --noinput
+
+      - name: Reiniciar servicios
+        run: |
+          sudo systemctl restart gunicorn_sigdc
+          sudo systemctl restart nginx
