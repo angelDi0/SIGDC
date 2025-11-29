@@ -1,4 +1,4 @@
-name: CI/CD Real Deploy SIGDC
+name: CI/CD Deploy SIGDC
 
 on:
   push:
@@ -11,8 +11,14 @@ jobs:
 
     steps:
 
-      - name: Checkout código
+      - name: Checkout del código
         uses: actions/checkout@v3
+
+      - name: Copiar proyecto a la carpeta real del servidor
+        run: |
+          sudo rsync -av --delete \
+          /home/kikin/actions-runner/_work/SIGDC/SIGDC/ \
+          /home/kikin/sites/SIGDC/
 
       - name: Activar entorno virtual
         run: |
@@ -38,3 +44,4 @@ jobs:
         run: |
           sudo systemctl restart gunicorn_sigdc
           sudo systemctl restart nginx
+
