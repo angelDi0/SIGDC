@@ -14,11 +14,12 @@ jobs:
       - name: Checkout del código
         uses: actions/checkout@v3
 
-      - name: Copiar proyecto a la carpeta real del servidor
+      - name: Copiar proyecto a la carpeta real del servidor (sin borrar env)
         run: |
           sudo rsync -av --delete \
-          /home/kikin/actions-runner/_work/SIGDC/SIGDC/ \
-          /home/kikin/sites/SIGDC/
+            --exclude env \
+            /home/kikin/actions-runner/_work/SIGDC/SIGDC/ \
+            /home/kikin/sites/SIGDC/
 
       - name: Activar entorno virtual
         run: |
