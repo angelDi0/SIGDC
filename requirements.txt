@@ -7,3 +7,4 @@ Pygments==2.19.2
 sqlparse==0.5.3
 tzdata==2025.2
 django-cors-headers
+gunicorn==23.0.0
