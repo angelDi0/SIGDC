@@ -40,17 +40,17 @@ jobs:
           /home/kikin/sites/SIGDC/env/bin/pip install --upgrade pip
           /home/kikin/sites/SIGDC/env/bin/pip install -r /home/kikin/sites/SIGDC/requirements.txt
 
-      # Ejecutar migraciones
+      # Ejecutar migraciones (RUTA CORREGIDA)
       - name: Migraciones
         run: |
           set -e
-          /home/kikin/sites/SIGDC/env/bin/python /home/kikin/sites/SIGDC/manage.py migrate --noinput
+          /home/kikin/sites/SIGDC/env/bin/python /home/kikin/sites/SIGDC/SIGDC/manage.py migrate --noinput
 
-      # Recolectar archivos estáticos
+      # Recolectar archivos estáticos (RUTA CORREGIDA)
       - name: Archivos estáticos
         run: |
           set -e
-          /home/kikin/sites/SIGDC/env/bin/python /home/kikin/sites/SIGDC/manage.py collectstatic --noinput
+          /home/kikin/sites/SIGDC/env/bin/python /home/kikin/sites/SIGDC/SIGDC/manage.py collectstatic --noinput
 
       # Ajustar permisos
       - name: Ajustar permisos
